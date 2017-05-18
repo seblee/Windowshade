@@ -46,10 +46,10 @@
 	UINT32	IDL ;
 	UINT8	IDB[4];
   }uni_rom_id;
-  typedef union {
-        UINT16	ui ;
+typedef union {
+    UINT16	ui ;
 	UINT8	uc[2] ;
-  }uni_i;
+ }uni_i;
 
 typedef union{
 	UINT32 BYTE;	
@@ -301,6 +301,7 @@ extern UINT16 Manual_override_TIMER;
 extern UINT8 FG_auto_manual_mode;
 extern UINT8 FG_First_auto;
 extern UINT8 FG_auto_open_time;
+extern UINT8  UART_DATA_buffer[493];
 #endif
 
 #if defined(__Product_PIC32MX2_WIFI__)

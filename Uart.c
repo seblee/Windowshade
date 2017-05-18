@@ -11,6 +11,10 @@
 #include "initial.h" // 初始化
 #include "pcf8563.h"
 
+UINT8 UartStatus = 0;
+UINT8 UartLen = 0;
+UINT8 UartCount = 0;
+
 void HA_uart_send_APP(void);
 
 #define BaudRate 64
@@ -34,7 +38,23 @@ void uart_send_APP_To_and_Tc(UINT8 Public_X, UINT8 Public_Y, UINT8 Public_Z);
 
 void Uart1_Init(void)
 {
-#if defined(__Product_PIC32MX2_WIFI__)
+#if defined(__Product_PIC32MX2_Receiver__)
+    RPA0R = 1; //Set RPA0-->U1TX
+    U1RXR = 4; //Set U1RX-->RPB2
+
+    U1BRG = BaudRate; //Set Baud rate
+    U1STA = 0;
+    U1MODEbits.ON = 1; //Enable UART for 8-bit data
+    //no parity, 1 Stop bit
+    U1STAbits.URXEN = 1; //Enable Transmit and Receive
+    U1STAbits.UTXEN = 1;
+
+    IPC8bits.U1IP = 3; // Set priority level=1
+    IPC8bits.U1IS = 3; // Set Subpriority level=1
+    // Can be done in a single operation by assigning PC2SET = 0x0000000D
+    IFS1bits.U1RXIF = 0; // Clear the timer interrupt status flag
+    IEC1bits.U1RXIE = 1; // Enable timer interrupts
+#elif defined(__Product_PIC32MX2_WIFI__)
     RPA0R = 1; //Set RPA0-->U1TX
     U1RXR = 4; //Set U1RX-->RPB2
 
@@ -52,10 +72,57 @@ void Uart1_Init(void)
     IEC1bits.U1RXIE = 1; // Enable timer interrupts
 #endif
 }
-#if defined(__Product_PIC32MX2_WIFI__)
+#if defined(__Product_PIC32MX2_Receiver__)
 void __ISR(_UART_1_VECTOR, ipl3) Uart1Handler(void)
 {
-
+    uni_i uart_x;
+    UART_DATA_buffer[UART_DATA_cnt] = U1RXREG;
+    switch (UartStatus)
+    {
+    case FrameHeadSataus:
+    {
+        if (UART_DATA_buffer[UART_DATA_cnt] == FrameHead)
+            UartStatus++;
+        else
+            UartStatus = 0;
+    }
+    break;
+    case FrameLenthStatus:
+    {
+        UartLen = UART_DATA_buffer[UART_DATA_cnt];
+        UartStatus++;
+    }
+    break;
+    case SignalIDStatus:
+    {
+        if (UART_DATA_buffer[UART_DATA_cnt] == FrameSingnalID)
+            UartStatus++;
+        else
+            UartStatus = 0;
+    }
+    break;
+    case DataStatus:
+    {
+        UartCount++;
+            if(UartCount >= (UartLen - 3)
+                UartStatus++;
+    }
+    break;
+    default:
+        break;
+    }
+    UART_DATA_cnt++;
+    if (UartStatus == FrameEndStatus) //接收完一帧处理数据
+    {
+        //add opration function
+        UartStatus = 0;
+        UART_DATA_cnt = 0;
+    }
+    IFS1bits.U1RXIF = 0;
+}
+#elif defined(__Product_PIC32MX2_WIFI__)
+void __ISR(_UART_1_VECTOR, ipl3) Uart1Handler(void)
+{
     uni_i uart_x;
     UART_DATA_buffer[UART_DATA_cnt] = U1RXREG;
     if ((FLAG_UART_0xBB == 0) && (UART_DATA_cnt >= 1))
