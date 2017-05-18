@@ -10,7 +10,7 @@
 #include <plib.h>    // 常用C定义
 #include "initial.h" // 初始化
 #include "pcf8563.h"
-
+#include "Uart.h"
 UINT8 UartStatus = 0;
 UINT8 UartLen = 0;
 UINT8 UartCount = 0;
@@ -18,7 +18,10 @@ UINT8 UartCount = 0;
 void HA_uart_send_APP(void);
 
 #define BaudRate 64
-#if defined(__Product_PIC32MX2_WIFI__)
+
+#if defined(__Product_PIC32MX2_Receiver__)
+void ReceiveFrame(UINT8 Cache);
+#elif defined(__Product_PIC32MX2_WIFI__)
 const UINT8 wifi_uart[6] = {0xBB, 0x00, 0x06, 0x80, 0x00, 0x00};
 const UINT8 Emial_uart[10] = {0xBB, 0x00, 0x20, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 const UINT8 HA_uart_open[5] = {79, 80, 69, 78, 32};
@@ -75,8 +78,13 @@ void Uart1_Init(void)
 #if defined(__Product_PIC32MX2_Receiver__)
 void __ISR(_UART_1_VECTOR, ipl3) Uart1Handler(void)
 {
-    uni_i uart_x;
-    UART_DATA_buffer[UART_DATA_cnt] = U1RXREG;
+    ReceiveFrame(U1RXREG);
+    IFS1bits.U1RXIF = 0;
+}
+
+void ReceiveFrame(UINT8 Cache)
+{
+    UART_DATA_buffer[UART_DATA_cnt] = Cache;
     switch (UartStatus)
     {
     case FrameHeadSataus:
@@ -104,8 +112,8 @@ void __ISR(_UART_1_VECTOR, ipl3) Uart1Handler(void)
     case DataStatus:
     {
         UartCount++;
-            if(UartCount >= (UartLen - 3)
-                UartStatus++;
+        if (UartCount >= (UartLen - 3))
+            UartStatus++;
     }
     break;
     default:
@@ -114,12 +122,12 @@ void __ISR(_UART_1_VECTOR, ipl3) Uart1Handler(void)
     UART_DATA_cnt++;
     if (UartStatus == FrameEndStatus) //接收完一帧处理数据
     {
-        //add opration function
+        //add Opration function
         UartStatus = 0;
         UART_DATA_cnt = 0;
     }
-    IFS1bits.U1RXIF = 0;
 }
+
 #elif defined(__Product_PIC32MX2_WIFI__)
 void __ISR(_UART_1_VECTOR, ipl3) Uart1Handler(void)
 {
