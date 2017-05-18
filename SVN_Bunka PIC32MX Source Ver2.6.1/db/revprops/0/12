@@ -1,0 +1,16 @@
+K 10
+svn:author
+V 13
+Administrator
+K 8
+svn:date
+V 27
+2014-06-12T07:40:15.093750Z
+K 7
+svn:log
+V 144
+Ver2.6
+集中通信机修改如下：
+1：SOFT完善Timer  APP修改时间后Timer立即生效
+2：追加受信器工厂测试      5.8日修改
+END

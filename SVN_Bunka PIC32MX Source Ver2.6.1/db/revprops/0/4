@@ -1,0 +1,15 @@
+K 10
+svn:author
+V 13
+Administrator
+K 8
+svn:date
+V 27
+2014-02-11T06:03:32.125000Z
+K 7
+svn:log
+V 108
+Ver2.1.1
+受信机机修改如下：
+1：遥控板控制时，HA状态变化时才发送信号(红色灯亮)
+END

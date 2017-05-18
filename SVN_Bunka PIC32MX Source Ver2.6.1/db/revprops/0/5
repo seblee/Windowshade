@@ -1,0 +1,16 @@
+K 10
+svn:author
+V 13
+Administrator
+K 8
+svn:date
+V 27
+2014-02-18T06:59:19.218750Z
+K 7
+svn:log
+V 150
+Ver2.1.2
+受信机机修改如下：
+1：APP控制时，STOP操作也要返回HA状态
+2：增加AFC和延长426M的同步检测时间 18ms——>36ms
+END
