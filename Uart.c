@@ -55,6 +55,7 @@ void Uart1_Init(void)
 #if defined(__Product_PIC32MX2_WIFI__)
 void __ISR(_UART_1_VECTOR, ipl3) Uart1Handler(void)
 {
+
     uni_i uart_x;
     UART_DATA_buffer[UART_DATA_cnt] = U1RXREG;
     if ((FLAG_UART_0xBB == 0) && (UART_DATA_cnt >= 1))
