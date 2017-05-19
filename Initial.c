@@ -367,6 +367,7 @@ void VHF_GPIO_INIT(void){
  #if defined(__Product_PIC32MX2_Receiver__)
     CNPUA=0xFFFF;
     CNPUB=0xFFFF;
+
     CNPUC=0xFFFF;
     TRISBbits.TRISB10=1;
     TRISBbits.TRISB14=1;

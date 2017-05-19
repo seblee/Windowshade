@@ -90,6 +90,9 @@ Note: make sure the boot loader and your application, both use the same fuse set
 #pragma config OSCIOFNC = OFF      // CLKO Enable: Disabled
 #pragma config IESO     = OFF      // Internal/External Switch-over: Disabled
 #pragma config FSOSCEN  = OFF      // Secondary Oscillator Enable: Disabled
+#pragma config FVBUSONIO = OFF       // USB VBUS ON Selection (Controlled by USB Module)
+#pragma config FUSBIDIO = OFF        // USB USID Selection (Controlled by the USB Module)
+
 #if defined(TRANSPORT_LAYER_ETH)
 #pragma config FMIIEN = OFF, FETHIO = OFF	// external PHY in RMII/alternate configuration
 #endif
@@ -163,7 +166,7 @@ main_start:
     FLAG_HA_ERR_signal = 1;
     RF_test_mode();
     TIME_EMC = 10;
-//    UARTSendDataByte(UART1, 0xa5);
+    //    UARTSendDataByte(UART1, 0xa5);
     while (1) {
         all_Erase_EEPROM_next();
         if (FLAG_all_Erase_OK == 0) //EEPROM所有数据擦出时，以下CODE不执行
@@ -182,9 +185,9 @@ main_start:
 // Core Timer Interrupts
 //
 
-void __ISR(_CORE_TIMER_VECTOR, ipl2) CoreTimerHandler(void) {
-    // clear the interrupt flag
-    mCTClearIntFlag();
-    // update the period
-    UpdateCoreTimer(CORE_TICK_RATE);
-}
+    void __ISR(_CORE_TIMER_VECTOR, ipl2) CoreTimerHandler(void) {
+        // clear the interrupt flag
+        mCTClearIntFlag();
+        // update the period
+        UpdateCoreTimer(CORE_TICK_RATE);
+    }
