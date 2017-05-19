@@ -7,21 +7,14 @@
 /*  Mark        :ver 1.0                                               */
 /***********************************************************************/
 #include <stdlib.h>
-#include <plib.h>    // ³£ÓÃC¶¨Òå
-#include "initial.h" // ³õÊ¼»¯
+#include <plib.h>		// ³£ÓÃC¶¨Òå
+#include "initial.h"		// ³õÊ¼»¯
 #include "pcf8563.h"
-#include "Uart.h"
-UINT8 UartStatus = 0;
-UINT8 UartLen = 0;
-UINT8 UartCount = 0;
 
 void HA_uart_send_APP(void);
 
 #define BaudRate 64
-
-#if defined(__Product_PIC32MX2_Receiver__)
-void ReceiveFrame(UINT8 Cache);
-#elif defined(__Product_PIC32MX2_WIFI__)
+#if defined(__Product_PIC32MX2_WIFI__)
 const UINT8 wifi_uart[6] = {0xBB, 0x00, 0x06, 0x80, 0x00, 0x00};
 const UINT8 Emial_uart[10] = {0xBB, 0x00, 0x20, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 const UINT8 HA_uart_open[5] = {79, 80, 69, 78, 32};
@@ -39,9 +32,8 @@ void uart_send_APP_Public(UINT8 Public_X, UINT8 Public_Y);
 void uart_send_APP_To_and_Tc(UINT8 Public_X, UINT8 Public_Y, UINT8 Public_Z);
 #endif
 
-void Uart1_Init(void)
-{
-#if defined(__Product_PIC32MX2_Receiver__)
+void Uart1_Init(void) {
+#if defined (__Product_PIC32MX2_Receiver__)
     RPA0R = 1; //Set RPA0-->U1TX
     U1RXR = 4; //Set U1RX-->RPB2
 
@@ -57,7 +49,8 @@ void Uart1_Init(void)
     // Can be done in a single operation by assigning PC2SET = 0x0000000D
     IFS1bits.U1RXIF = 0; // Clear the timer interrupt status flag
     IEC1bits.U1RXIE = 1; // Enable timer interrupts
-#elif defined(__Product_PIC32MX2_WIFI__)
+#endif
+#if defined(__Product_PIC32MX2_WIFI__)
     RPA0R = 1; //Set RPA0-->U1TX
     U1RXR = 4; //Set U1RX-->RPB2
 
@@ -75,70 +68,25 @@ void Uart1_Init(void)
     IEC1bits.U1RXIE = 1; // Enable timer interrupts
 #endif
 }
-#if defined(__Product_PIC32MX2_Receiver__)
-void __ISR(_UART_1_VECTOR, ipl3) Uart1Handler(void)
-{
-    ReceiveFrame(U1RXREG);
+
+#if defined (__Product_PIC32MX2_Receiver__)
+
+void __ISR(_UART_1_VECTOR, ipl2)Uart1Handler(void) {
+    UINT8 Cache;
+    Cache = U1RXREG;
+    UARTSendDataByte(UART1, 0x01);
     IFS1bits.U1RXIF = 0;
-}
 
-void ReceiveFrame(UINT8 Cache)
-{
-    UART_DATA_buffer[UART_DATA_cnt] = Cache;
-    switch (UartStatus)
-    {
-    case FrameHeadSataus:
-    {
-        if (UART_DATA_buffer[UART_DATA_cnt] == FrameHead)
-            UartStatus++;
-        else
-            UartStatus = 0;
-    }
-    break;
-    case FrameLenthStatus:
-    {
-        UartLen = UART_DATA_buffer[UART_DATA_cnt];
-        UartStatus++;
-    }
-    break;
-    case SignalIDStatus:
-    {
-        if (UART_DATA_buffer[UART_DATA_cnt] == FrameSingnalID)
-            UartStatus++;
-        else
-            UartStatus = 0;
-    }
-    break;
-    case DataStatus:
-    {
-        UartCount++;
-        if (UartCount >= (UartLen - 3))
-            UartStatus++;
-    }
-    break;
-    default:
-        break;
-    }
-    UART_DATA_cnt++;
-    if (UartStatus == FrameEndStatus) //½ÓÊÕÍêÒ»Ö¡´¦ÀíÊý¾Ý
-    {
-        //add Opration function
-        UartStatus = 0;
-        UART_DATA_cnt = 0;
-    }
 }
+#endif
+#if defined(__Product_PIC32MX2_WIFI__)
 
-#elif defined(__Product_PIC32MX2_WIFI__)
-void __ISR(_UART_1_VECTOR, ipl3) Uart1Handler(void)
-{
+void __ISR(_UART_1_VECTOR, ipl3)Uart1Handler(void) {
     uni_i uart_x;
     UART_DATA_buffer[UART_DATA_cnt] = U1RXREG;
-    if ((FLAG_UART_0xBB == 0) && (UART_DATA_cnt >= 1))
-    {
-        if (UART_DATA_buffer[UART_DATA_cnt] == 0xBB)
-            TIME_UART = 2; //½â¾ö¿ª»úUARTÊÕµ½ÂÒÂë£¬APPÕý³£¿ØÖÆÊ±²»ÄÜÕýÈ·ÊÕµ½¡£
-        else if ((UART_DATA_buffer[UART_DATA_cnt - 1] == 0xBB) && (UART_DATA_buffer[UART_DATA_cnt] == 0x00))
-        {
+    if ((FLAG_UART_0xBB == 0)&&(UART_DATA_cnt >= 1)) {
+        if (UART_DATA_buffer[UART_DATA_cnt] == 0xBB)TIME_UART = 2; //½â¾ö¿ª»úUARTÊÕµ½ÂÒÂë£¬APPÕý³£¿ØÖÆÊ±²»ÄÜÕýÈ·ÊÕµ½¡£
+        else if ((UART_DATA_buffer[UART_DATA_cnt - 1] == 0xBB)&&(UART_DATA_buffer[UART_DATA_cnt] == 0x00)) {
             TIME_UART = 13;
             UART_DATA_cnt = 1;
             UART_DATA_buffer[0] = 0xBB;
@@ -173,117 +121,92 @@ void __ISR(_UART_1_VECTOR, ipl3) Uart1Handler(void)
     //                    /******************************************/
     //                }
     //            }
-    if ((UART_DATA_buffer[2] == 0x06) && (UART_DATA_buffer[3] == 0x80))
-    {
+    if ((UART_DATA_buffer[2] == 0x06)&&(UART_DATA_buffer[3] == 0x80)) {
         uart_x.uc[0] = UART_DATA_buffer[8];
         uart_x.uc[1] = UART_DATA_buffer[9];
-        if (uart_x.ui == 0x0101)
-            FG_HA_Inquiry_NO_again_send = 1; //2015.4.1ÐÞÕý3 ÓÉÓÚAPP²éÑ¯ÊÜÐÅÆ÷HA×´Ì¬ÐèÒªºÜ³¤µÄÊ±¼ä£¬ËùÒÔ×·¼ÓÖ¸Áî²éÑ¯»º´æÔÚÍ¨ÐÅ»úÀïÃæµÄHA×´Ì¬
-        else
-            FG_HA_Inquiry_NO_again_send = 0;
-        switch (uart_x.ui)
-        {
-        case 0x0101: //¾íÁ±ÃÅÒÀ´Îµ¥¸ö²Ù×÷£¬HA×´Ì¬È¡µÃ
-        case 0x0102:
-        //case 0x0110:                //ÒÔÏÂ2015.08.21×·¼Ó    È¡Ïû¸ÃÃüÁî
-        case 0x0111:
-            UART_DATA_i = 18;
-            if (UART_DATA_cnt >= UART_DATA_i)
-                UART_DATA_cope();
-            break;
-        case 0x0105: //RTC_write
-            UART_DATA_i = 20;
-            if (UART_DATA_cnt >= UART_DATA_i)
-                UART_DATA_cope();
-            time_APP_Start_up = 500; //2015.04.27ÐÞÕý
-            break;
-        case 0x0106: //¿ØÖÆ¶¨Ê±Æ÷Éè¶¨ÒªÇó
-            if (UART_DATA_cnt >= 18)
-            {
-                if (UART_DATA_cnt == 18)
-                    UART_DATA_i = 20 + UART_DATA_buffer[17] * 3;
-                if (UART_DATA_cnt >= UART_DATA_i)
-                    UART_DATA_cope();
-            }
-            break;
-        case 0x0107: //¿ØÖÆ¶¨Ê±Æ÷È¡µÃÒªÇó
-        case 0x010A: //ÓÊ¼þ¶¨Ê±Æ÷È¡µÃÒªÇó
-            UART_DATA_i = 14;
-            if (UART_DATA_cnt >= UART_DATA_i)
-                UART_DATA_cope();
-            break;
-        case 0x0108: //Ò»Æë²Ù×÷
-            if (UART_DATA_cnt >= 13)
-            {
-                if (UART_DATA_cnt == 13)
-                    UART_DATA_i = 15 + UART_DATA_buffer[12] * 3;
-                if (UART_DATA_cnt >= UART_DATA_i)
-                    UART_DATA_cope();
-            }
-            break;
-        case 0x0109: //ÓÊ¼þ¶¨Ê±Æ÷Éè¶¨ÒªÇó
-            UART_DATA_i = 20;
-            if (UART_DATA_cnt >= UART_DATA_i)
-                UART_DATA_cope();
-            break;
-        case 0x010B: //ÈÕ³öÈÕÂäÉè¶¨ÒªÇó
-            if (UART_DATA_cnt >= 16)
-            {
-                if (UART_DATA_cnt == 16)
-                    UART_DATA_i = 18 + UART_DATA_buffer[15] * 3;
-                if (UART_DATA_cnt >= UART_DATA_i)
-                    UART_DATA_cope();
-            }
-            break;
-        case 0x0103: //APP»ñÈ¡¾íÁ±ÃÅIDÈ«²¿
-        case 0x0104: //RTC_read
-        case 0x010C: //ÈÕ³öÈÕÂäÈ¡µÃÒªÇó
-        case 0x010E: //¾íÁ±ÃÅ×´Ì¬±ä»¯ÊÇ·ñÓÊ¼þËÍÐÅÈ¡µÃ
-        case 0x010F: //¼¯ÖÐÍ¨Ñ¶»ú°æ±¾È¡µÃ
-        case 0x01F1: //ÈÕ³öÈÕÂä±í¸ñÊý¾ÝDATAÈ¡µÃ
-            UART_DATA_i = 13;
-            if (UART_DATA_cnt >= UART_DATA_i)
-                UART_DATA_cope();
-            break;
-        case 0x010D: //¾íÁ±ÃÅ×´Ì¬±ä»¯ÊÇ·ñÓÊ¼þËÍÐÅÉè¶¨
-            UART_DATA_i = 16;
-            if (UART_DATA_cnt >= UART_DATA_i)
-                UART_DATA_cope();
-            break;
-        case 0x01F0: //ÈÕ³öÈÕÂä±í¸ñÊý¾ÝDATAÉèÖÃ
-            UART_DATA_i = 493;
-            if (UART_DATA_cnt >= UART_DATA_i)
-                UART_DATA_cope();
-            break;
-        default:
-            break;
+        if (uart_x.ui == 0x0101)FG_HA_Inquiry_NO_again_send = 1; //2015.4.1ÐÞÕý3 ÓÉÓÚAPP²éÑ¯ÊÜÐÅÆ÷HA×´Ì¬ÐèÒªºÜ³¤µÄÊ±¼ä£¬ËùÒÔ×·¼ÓÖ¸Áî²éÑ¯»º´æÔÚÍ¨ÐÅ»úÀïÃæµÄHA×´Ì¬
+        else FG_HA_Inquiry_NO_again_send = 0;
+        switch (uart_x.ui) {
+            case 0x0101: //¾íÁ±ÃÅÒÀ´Îµ¥¸ö²Ù×÷£¬HA×´Ì¬È¡µÃ
+            case 0x0102:
+                //case 0x0110:                //ÒÔÏÂ2015.08.21×·¼Ó    È¡Ïû¸ÃÃüÁî
+            case 0x0111:
+                UART_DATA_i = 18;
+                if (UART_DATA_cnt >= UART_DATA_i)UART_DATA_cope();
+                break;
+            case 0x0105: //RTC_write
+                UART_DATA_i = 20;
+                if (UART_DATA_cnt >= UART_DATA_i)UART_DATA_cope();
+                time_APP_Start_up = 500; //2015.04.27ÐÞÕý
+                break;
+            case 0x0106: //¿ØÖÆ¶¨Ê±Æ÷Éè¶¨ÒªÇó
+                if (UART_DATA_cnt >= 18) {
+                    if (UART_DATA_cnt == 18)UART_DATA_i = 20 + UART_DATA_buffer[17]*3;
+                    if (UART_DATA_cnt >= UART_DATA_i)UART_DATA_cope();
+                }
+                break;
+            case 0x0107: //¿ØÖÆ¶¨Ê±Æ÷È¡µÃÒªÇó
+            case 0x010A: //ÓÊ¼þ¶¨Ê±Æ÷È¡µÃÒªÇó
+                UART_DATA_i = 14;
+                if (UART_DATA_cnt >= UART_DATA_i)UART_DATA_cope();
+                break;
+            case 0x0108: //Ò»Æë²Ù×÷
+                if (UART_DATA_cnt >= 13) {
+                    if (UART_DATA_cnt == 13)UART_DATA_i = 15 + UART_DATA_buffer[12]*3;
+                    if (UART_DATA_cnt >= UART_DATA_i)UART_DATA_cope();
+                }
+                break;
+            case 0x0109: //ÓÊ¼þ¶¨Ê±Æ÷Éè¶¨ÒªÇó
+                UART_DATA_i = 20;
+                if (UART_DATA_cnt >= UART_DATA_i)UART_DATA_cope();
+                break;
+            case 0x010B: //ÈÕ³öÈÕÂäÉè¶¨ÒªÇó
+                if (UART_DATA_cnt >= 16) {
+                    if (UART_DATA_cnt == 16)UART_DATA_i = 18 + UART_DATA_buffer[15]*3;
+                    if (UART_DATA_cnt >= UART_DATA_i)UART_DATA_cope();
+                }
+                break;
+            case 0x0103: //APP»ñÈ¡¾íÁ±ÃÅIDÈ«²¿
+            case 0x0104: //RTC_read
+            case 0x010C: //ÈÕ³öÈÕÂäÈ¡µÃÒªÇó
+            case 0x010E: //¾íÁ±ÃÅ×´Ì¬±ä»¯ÊÇ·ñÓÊ¼þËÍÐÅÈ¡µÃ
+            case 0x010F: //¼¯ÖÐÍ¨Ñ¶»ú°æ±¾È¡µÃ
+            case 0x01F1: //ÈÕ³öÈÕÂä±í¸ñÊý¾ÝDATAÈ¡µÃ
+                UART_DATA_i = 13;
+                if (UART_DATA_cnt >= UART_DATA_i)UART_DATA_cope();
+                break;
+            case 0x010D: //¾íÁ±ÃÅ×´Ì¬±ä»¯ÊÇ·ñÓÊ¼þËÍÐÅÉè¶¨
+                UART_DATA_i = 16;
+                if (UART_DATA_cnt >= UART_DATA_i)UART_DATA_cope();
+                break;
+            case 0x01F0: //ÈÕ³öÈÕÂä±í¸ñÊý¾ÝDATAÉèÖÃ
+                UART_DATA_i = 493;
+                if (UART_DATA_cnt >= UART_DATA_i)UART_DATA_cope();
+                break;
+            default:
+                break;
         }
-    }
-    else if ((UART_DATA_buffer[2] == 0x20) && (UART_DATA_buffer[3] == 0x80))
-    {
+    } else if ((UART_DATA_buffer[2] == 0x20)&&(UART_DATA_buffer[3] == 0x80)) {
         UART_DATA_i = 10;
-        if (UART_DATA_cnt >= UART_DATA_i)
-            UART_DATA_cope();
+        if (UART_DATA_cnt >= UART_DATA_i)UART_DATA_cope();
     }
-    if ((UART_DATA_cnt >= 493) || ((UART_DATA_cnt > 2) && (TIME_UART == 0)))
-    {
+    if ((UART_DATA_cnt >= 493) || ((UART_DATA_cnt > 2)&&(TIME_UART == 0))) {
         UART_DATA_cnt = 1;
         FLAG_UART_0xBB = 0;
     } //UART_DATA_cnt=0-->1  ½â¾öUARTÊÕµ½ÂÒÂëºó£¬Ã¿µÚÒ»´Î½ÓÊÕÊý¾ÝÊ§°Ü£¬ºóÃæ¾ÍºÃÁË¡£
     IFS1bits.U1RXIF = 0;
 }
-void UART_DATA_cope(void)
-{
+
+void UART_DATA_cope(void) {
     UINT16 UART_DATA_j;
     UART_DATA_cnt = 0;
     FLAG_UART_0xBB = 0;
-    for (UART_DATA_j = 0; UART_DATA_j < UART_DATA_i; UART_DATA_j++)
-        UART1_DATA[UART_DATA_j] = UART_DATA_buffer[UART_DATA_j];
+    for (UART_DATA_j = 0; UART_DATA_j < UART_DATA_i; UART_DATA_j++)UART1_DATA[UART_DATA_j] = UART_DATA_buffer[UART_DATA_j];
     FLAG_UART_R = 1;
 }
 #endif
-void UART_Decode(void)
-{
+
+void UART_Decode(void) {
 #if defined(__Product_PIC32MX2_WIFI__)
     UINT16 i, j;
     UINT16 m = 0;
@@ -293,674 +216,527 @@ void UART_Decode(void)
     UINT8 xm00[10] = {0};
     UINT16 RTC_Minutes00;
 
-    if (UART1_DATA[2] == 0x06)
-    { /*****2013Äê11ÔÂ22ÈÕÐÞ¸Ä  Ìá¸ßEmialÎÈ¶¨ÐÔ****/
-        for (i = 0; i < 6; i++)
-        {
-            if (UART1_DATA[i] == wifi_uart[i])
-                ;
-            else
-            {
+    if (UART1_DATA[2] == 0x06) { /*****2013Äê11ÔÂ22ÈÕÐÞ¸Ä  Ìá¸ßEmialÎÈ¶¨ÐÔ****/
+        for (i = 0; i < 6; i++) {
+            if (UART1_DATA[i] == wifi_uart[i]);
+            else {
                 FLAG_UART_ok = 0;
                 return;
             }
         }
         uart_y.uc[0] = UART1_DATA[8];
         uart_y.uc[1] = UART1_DATA[9];
-        switch (uart_y.ui)
-        {
-        case 0x0101:            //¾íÁ±ÃÅÒÀ´Îµ¥¸öHA×´Ì¬È¡µÃ
-                                //case 0x0110:         //ÒÔÏÂ2015.08.21×·¼Ó    È¡Ïû¸ÃÃüÁî
-            APP_check_char = 0; //2014.10.11ÐÞ¸Ä
-        case 0x0102:            //¾íÁ±ÃÅÒÀ´Îµ¥¸ö²Ù×÷
-            for (i = 8; i < 16; i++)
-                m += UART1_DATA[i];
-            n = UART1_DATA[16] + UART1_DATA[17] * 256;
-            if (m == n)
-            {
-                //20150501 JAPAN×·¼Ó  ½â¾öÊÇ·´¸´Æô¶¯APPÊ±£¬ÔÚ²éÑ¯Í¨ÐÅ»ú»º³ÁÄÚ²¿HA×´Ì¬Ê±£¬½«Control_code=1¿ØÖÆ³öÈ¥ÁË£¨ÔÚÖ®Ç°ÓÐÒ»Æë²Ù×÷µÄÇé¿ö£¬ÕýÔÚÊµÊ©µ±ÖÐ£©
-                ID_data_uart_CMD0101_01.IDB[0] = UART1_DATA[11];
-                ID_data_uart_CMD0101_01.IDB[1] = UART1_DATA[12];
-                ID_data_uart_CMD0101_01.IDB[2] = UART1_DATA[13];
-                ID_data_uart_CMD0101_01.IDB[3] = 0x00;
-                if ((uart_y.ui == 0x0101) && (UART1_DATA[14] == 0x01))
-                    ;
-                else
-                    Control_code = UART1_DATA[14];
-                //eeprom_IDcheck_UART();
-                eeprom_IDcheck_CMD0101_01_UART();
-                if (FLAG_IDCheck_OK == 1)
-                {
-                    //if(Control_code==0x00){FLAG_HA_Inquiry=1;DATA_Packet_Control_0=0x00;}    //±íÊ¾APP²éÑ¯
-                    if ((uart_y.ui == 0x0101) && (UART1_DATA[14] == 0x01))
-                    { //2015.4.1ÐÞÕý3 ÓÉÓÚAPP²éÑ¯ÊÜÐÅÆ÷HA×´Ì¬ÐèÒªºÜ³¤µÄÊ±¼ä£¬ËùÒÔ×·¼ÓÖ¸Áî²éÑ¯»º´æÔÚÍ¨ÐÅ»úÀïÃæµÄHA×´Ì¬
-                        Emial_Cache_HA = 0;
-                        Emial_Cache_SWITCH = 0;
-                        if (Email_check_TO_APP())
-                        {
-                            Control_code = 0x00;
-                            goto CMD0101_01_to_00;
+        switch (uart_y.ui) {
+            case 0x0101: //¾íÁ±ÃÅÒÀ´Îµ¥¸öHA×´Ì¬È¡µÃ
+                //case 0x0110:         //ÒÔÏÂ2015.08.21×·¼Ó    È¡Ïû¸ÃÃüÁî
+                APP_check_char = 0; //2014.10.11ÐÞ¸Ä
+            case 0x0102: //¾íÁ±ÃÅÒÀ´Îµ¥¸ö²Ù×÷
+                for (i = 8; i < 16; i++) m += UART1_DATA[i];
+                n = UART1_DATA[16] + UART1_DATA[17]*256;
+                if (m == n) {
+                    //20150501 JAPAN×·¼Ó  ½â¾öÊÇ·´¸´Æô¶¯APPÊ±£¬ÔÚ²éÑ¯Í¨ÐÅ»ú»º³ÁÄÚ²¿HA×´Ì¬Ê±£¬½«Control_code=1¿ØÖÆ³öÈ¥ÁË£¨ÔÚÖ®Ç°ÓÐÒ»Æë²Ù×÷µÄÇé¿ö£¬ÕýÔÚÊµÊ©µ±ÖÐ£©
+                    ID_data_uart_CMD0101_01.IDB[0] = UART1_DATA[11];
+                    ID_data_uart_CMD0101_01.IDB[1] = UART1_DATA[12];
+                    ID_data_uart_CMD0101_01.IDB[2] = UART1_DATA[13];
+                    ID_data_uart_CMD0101_01.IDB[3] = 0x00;
+                    if ((uart_y.ui == 0x0101)&&(UART1_DATA[14] == 0x01));
+                    else Control_code = UART1_DATA[14];
+                    //eeprom_IDcheck_UART();
+                    eeprom_IDcheck_CMD0101_01_UART();
+                    if (FLAG_IDCheck_OK == 1) {
+                        //if(Control_code==0x00){FLAG_HA_Inquiry=1;DATA_Packet_Control_0=0x00;}    //±íÊ¾APP²éÑ¯
+                        if ((uart_y.ui == 0x0101)&&(UART1_DATA[14] == 0x01)) { //2015.4.1ÐÞÕý3 ÓÉÓÚAPP²éÑ¯ÊÜÐÅÆ÷HA×´Ì¬ÐèÒªºÜ³¤µÄÊ±¼ä£¬ËùÒÔ×·¼ÓÖ¸Áî²éÑ¯»º´æÔÚÍ¨ÐÅ»úÀïÃæµÄHA×´Ì¬
+                            Emial_Cache_HA = 0;
+                            Emial_Cache_SWITCH = 0;
+                            if (Email_check_TO_APP()) {
+                                Control_code = 0x00;
+                                goto CMD0101_01_to_00;
+                            }
+                            uart_send_APP_Head();
+                            U1TXREG = 0x08;
+                            U1TXREG = 0x00;
+                            Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+                            U1TXREG = 0x01;
+                            U1TXREG = 0x01;
+                            U1TXREG = 0x00;
+                            m = 2;
+                            U1TXREG = UART1_DATA[11];
+                            m = m + UART1_DATA[11];
+                            U1TXREG = UART1_DATA[12];
+                            m = m + UART1_DATA[12];
+                            U1TXREG = UART1_DATA[13];
+                            m = m + UART1_DATA[13];
+                            Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+                            U1TXREG = Emial_Cache_HA;
+                            m = m + Emial_Cache_HA;
+                            U1TXREG = Emial_Cache_SWITCH;
+                            m = m + Emial_Cache_SWITCH;
+                            U1TXREG = m % 256;
+                            U1TXREG = m / 256;
+
+                            FLAG_IDCheck_OK = 0;
+                            time_APP_Start_up = 5;
+                        } else {
+                            if ((uart_y.ui == 0x0102)&&(UART1_DATA[14] >= 0x80)) { //ÒÔÏÂ2015.08.21×·¼Ó
+                                IDcheck_CMD0102_HA_Cache();
+                                if (FLAG_IDcheck_CMD0102_HA == 1) {
+                                    FLAG_IDcheck_CMD0102_HA = 0;
+                                    if ((HA_Cache_ha[CMD0102_To_or_Tc_HA] == 2)&&(UART1_DATA[14] == 0x80))Control_code = 0x80 + ID_DATA_To[CMD0102_To_or_Tc_place];
+                                    else if ((HA_Cache_ha[CMD0102_To_or_Tc_HA] == 1)&&(UART1_DATA[14] == 0xC0))Control_code = 0xC0 + ID_DATA_Tc[CMD0102_To_or_Tc_place];
+                                    else goto CMD0102_NG;
+                                } else goto CMD0102_NG;
+                            }
+CMD0101_01_to_00:
+                            ID_data.IDB[0] = ID_data_uart_CMD0101_01.IDB[0];
+                            ID_data.IDB[1] = ID_data_uart_CMD0101_01.IDB[1];
+                            ID_data.IDB[2] = ID_data_uart_CMD0101_01.IDB[2];
+                            ID_data.IDB[3] = 0x00;
+                            if ((Control_code == 0x00) || (Control_code == 0x02) || (Control_code == 0x08)) {
+                                FLAG_HA_Inquiry = 1;
+                                DATA_Packet_Control_0 = 0x00;
+                            } //±íÊ¾APP²éÑ¯
+                            FLAG_IDCheck_OK = 0;
+                            FLAG_UART_ok = 1;
+                            time_APP_Start_up = 0; //2015.04.27ÐÞÕý
                         }
+                    } else {
+CMD0102_NG:
+                        HA_uart_app[8] = UART1_DATA[8];
+                        HA_uart_app[9] = UART1_DATA[9];
+                        HA_uart_app[10] = 0x01;
+                        HA_uart_app[11] = UART1_DATA[11];
+                        HA_uart_app[12] = UART1_DATA[12];
+                        HA_uart_app[13] = UART1_DATA[13];
+                        HA_uart_app[14] = 0x00;
+                        HA_uart_app[15] = 0x00;
+                        n = n - UART1_DATA[14] + 1;
+                        HA_uart_app[16] = n % 256;
+                        HA_uart_app[17] = n / 256;
+
+                        Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+                        for (i = 0; i < 18; i++) {
+                            U1TXREG = HA_uart_app[i];
+                            if (i % 6 == 0)Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+                        }
+                    }
+                } else {
+                    uart_send_APP_Public(UART1_DATA[8], 1);
+                    FLAG_UART_ok = 0;
+                }
+                break;
+            case 0x0104: //RTC_read
+            case 0x0105: //RTC_write
+                if (UART1_DATA[8] == 0x04) {
+                    for (i = 8; i < 11; i++) m += UART1_DATA[i];
+                    n = UART1_DATA[11] + UART1_DATA[12]*256;
+                } else {
+                    for (i = 8; i < 18; i++) m += UART1_DATA[i];
+                    n = UART1_DATA[18] + UART1_DATA[19]*256;
+                }
+                if (m == n) {
+                    if (UART1_DATA[8] == 0x05) {
+                        Set_Time(&UART1_DATA[11]); //==0x00  Ð´Ê±ÖÓ
+                        SUN_time_get(SUN_ON_OFF_seat[2]);
+                        Read_Time(&xm00[0]);
+                        //RTC_Minutes00=xm00[2]*60+xm00[1];
+                        RTC_Minutes00 = Hex_Decimal(xm00[2], xm00[1]); //2014.10.11ÐÞ¸Ä   ½â¾öTIMERÓÐÊ±²»¶¯×÷
+                        NEW_set_alarm_pcf8563(RTC_Minutes00);
+                        uart_send_APP_Public(0x05, 0);
+                    } else if (UART1_DATA[8] == 0x04) { //==0x01  ¶ÁÊ±ÖÓ
+                        Read_Time(number_time);
                         uart_send_APP_Head();
-                        U1TXREG = 0x08;
+                        U1TXREG = 10;
                         U1TXREG = 0x00;
                         Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-                        U1TXREG = 0x01;
+                        U1TXREG = 0x04;
                         U1TXREG = 0x01;
                         U1TXREG = 0x00;
-                        m = 2;
-                        U1TXREG = UART1_DATA[11];
-                        m = m + UART1_DATA[11];
-                        U1TXREG = UART1_DATA[12];
-                        m = m + UART1_DATA[12];
-                        U1TXREG = UART1_DATA[13];
-                        m = m + UART1_DATA[13];
                         Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-                        U1TXREG = Emial_Cache_HA;
-                        m = m + Emial_Cache_HA;
-                        U1TXREG = Emial_Cache_SWITCH;
-                        m = m + Emial_Cache_SWITCH;
+                        m = 0;
+                        for (i = 0; i < 7; i++) {
+                            U1TXREG = number_time[i];
+                            m = m + number_time[i];
+                        }
+                        Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+                        m = m + 0x05;
                         U1TXREG = m % 256;
                         U1TXREG = m / 256;
-
-                        FLAG_IDCheck_OK = 0;
-                        time_APP_Start_up = 5;
                     }
-                    else
-                    {
-                        if ((uart_y.ui == 0x0102) && (UART1_DATA[14] >= 0x80))
-                        { //ÒÔÏÂ2015.08.21×·¼Ó
-                            IDcheck_CMD0102_HA_Cache();
-                            if (FLAG_IDcheck_CMD0102_HA == 1)
-                            {
-                                FLAG_IDcheck_CMD0102_HA = 0;
-                                if ((HA_Cache_ha[CMD0102_To_or_Tc_HA] == 2) && (UART1_DATA[14] == 0x80))
-                                    Control_code = 0x80 + ID_DATA_To[CMD0102_To_or_Tc_place];
-                                else if ((HA_Cache_ha[CMD0102_To_or_Tc_HA] == 1) && (UART1_DATA[14] == 0xC0))
-                                    Control_code = 0xC0 + ID_DATA_Tc[CMD0102_To_or_Tc_place];
-                                else
-                                    goto CMD0102_NG;
-                            }
-                            else
-                                goto CMD0102_NG;
+                } else uart_send_APP_Public(UART1_DATA[8], 1);
+                break;
+            case 0x0106: //¿ØÖÆ¶¨Ê±Æ÷Éè¶¨ÒªÇó
+            case 0x0107: //¿ØÖÆ¶¨Ê±Æ÷È¡µÃÒªÇó
+                if (UART1_DATA[8] == 0x06) {
+                    for (i = 8; i < 18 + UART1_DATA[17]*3; i++) m += UART1_DATA[i];
+                    n = UART1_DATA[18 + UART1_DATA[17]*3] + UART1_DATA[19 + UART1_DATA[17]*3]*256;
+                } else {
+                    for (i = 8; i < 12; i++) m += UART1_DATA[i];
+                    n = UART1_DATA[12] + UART1_DATA[13]*256;
+                }
+                if (m == n) {
+                    if (UART1_DATA[8] == 0x06) {
+                        //if((UART1_DATA[11]==0)||(UART1_DATA[11]>0x0A)||(UART1_DATA[12]>1)||(UART1_DATA[13]>9)||(UART1_DATA[14]>25)||(UART1_DATA[15]>60)||(UART1_DATA[17]==0))
+                        if ((UART1_DATA[11] == 0) || (UART1_DATA[11] > 0x0A) || (UART1_DATA[14] > 0x25) || (UART1_DATA[15] > 0x60))uart_send_APP_Public(0x06, 1);
+                        else {
+                            eeprom_IDcheck_Multiple(17);
+                            if (FLAG_IDCheck_OK == 1) {
+                                FLAG_IDCheck_OK = 0;
+                                alarm_EEPROM_write();
+                                if (FLAG_Write_Read_compare == 1)uart_send_APP_Public(0x06, 0);
+                                else uart_send_APP_Public(0x06, 1);
+                            } else uart_send_APP_Public(0x06, 1);
                         }
-                    CMD0101_01_to_00:
-                        ID_data.IDB[0] = ID_data_uart_CMD0101_01.IDB[0];
-                        ID_data.IDB[1] = ID_data_uart_CMD0101_01.IDB[1];
-                        ID_data.IDB[2] = ID_data_uart_CMD0101_01.IDB[2];
-                        ID_data.IDB[3] = 0x00;
-                        if ((Control_code == 0x00) || (Control_code == 0x02) || (Control_code == 0x08))
-                        {
-                            FLAG_HA_Inquiry = 1;
-                            DATA_Packet_Control_0 = 0x00;
-                        } //±íÊ¾APP²éÑ¯
-                        FLAG_IDCheck_OK = 0;
-                        FLAG_UART_ok = 1;
-                        time_APP_Start_up = 0; //2015.04.27ÐÞÕý
-                    }
+                    } else uart_send_APP_allalarm();
+                } else uart_send_APP_Public(UART1_DATA[8], 1);
+                break;
+            case 0x0109: //ÓÊ¼þ¶¨Ê±Æ÷Éè¶¨ÒªÇó
+            case 0x010A: //ÓÊ¼þ¶¨Ê±Æ÷È¡µÃÒªÇó
+                if (UART1_DATA[8] == 0x09) {
+                    for (i = 8; i < 18; i++) m += UART1_DATA[i];
+                    n = UART1_DATA[18] + UART1_DATA[19]*256;
+                } else {
+                    for (i = 8; i < 12; i++) m += UART1_DATA[i];
+                    n = UART1_DATA[12] + UART1_DATA[13]*256;
                 }
-                else
-                {
-                CMD0102_NG:
-                    HA_uart_app[8] = UART1_DATA[8];
-                    HA_uart_app[9] = UART1_DATA[9];
-                    HA_uart_app[10] = 0x01;
-                    HA_uart_app[11] = UART1_DATA[11];
-                    HA_uart_app[12] = UART1_DATA[12];
-                    HA_uart_app[13] = UART1_DATA[13];
-                    HA_uart_app[14] = 0x00;
-                    HA_uart_app[15] = 0x00;
-                    n = n - UART1_DATA[14] + 1;
-                    HA_uart_app[16] = n % 256;
-                    HA_uart_app[17] = n / 256;
-
-                    Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-                    for (i = 0; i < 18; i++)
-                    {
-                        U1TXREG = HA_uart_app[i];
-                        if (i % 6 == 0)
-                            Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-                    }
+                if (m == n) {
+                    if (UART1_DATA[8] == 0x09) {
+                        if ((UART1_DATA[11] == 0) || (UART1_DATA[11] > 0x0A) || (UART1_DATA[13] > 0x25) || (UART1_DATA[14] > 0x60))uart_send_APP_Public(0x09, 1);
+                        else {
+                            Emial_time_EEPROM_write();
+                            if (FLAG_Write_Read_compare == 1)uart_send_APP_Public(0x09, 0);
+                            else uart_send_APP_Public(0x09, 1);
+                        }
+                    } else uart_send_APP_Emial_time();
+                } else uart_send_APP_Public(UART1_DATA[8], 1);
+                break;
+            case 0x0111: //ÒÔÏÂ2015.08.21×·¼Ó        //°ë¿ªTo °ë±ÕTcÉè¶¨ºÍ¶ÁÈ¡
+                for (i = 8; i < 16; i++) m += UART1_DATA[i];
+                n = UART1_DATA[16] + UART1_DATA[17]*256;
+                if (m == n) {
+                    ID_data_uart_CMD0111.IDB[0] = UART1_DATA[11];
+                    ID_data_uart_CMD0111.IDB[1] = UART1_DATA[12];
+                    ID_data_uart_CMD0111.IDB[2] = UART1_DATA[13];
+                    ID_data_uart_CMD0111.IDB[3] = 0x00;
+                    eeprom_IDcheck_CMD0111_UART();
+                    if (FLAG_IDCheck_OK == 1) {
+                        if (((UART1_DATA[14] == 1) || (UART1_DATA[14] == 3))&&(UART1_DATA[15] != 0)) {
+                            EEPROM_write_To_or_Tc(ID_DATA_To_or_Tc_place, UART1_DATA[14], UART1_DATA[15]);
+                            uart_send_APP_To_and_Tc(0, UART1_DATA[14], 0);
+                        } else if (UART1_DATA[14] == 2)uart_send_APP_To_and_Tc(0, UART1_DATA[14], ID_DATA_To[ID_DATA_To_or_Tc_place]);
+                        else if (UART1_DATA[14] == 4)uart_send_APP_To_and_Tc(0, UART1_DATA[14], ID_DATA_Tc[ID_DATA_To_or_Tc_place]);
+                        else uart_send_APP_To_and_Tc(1, UART1_DATA[14], 0);
+                    } else uart_send_APP_To_and_Tc(1, UART1_DATA[14], 0);
+                } else uart_send_APP_To_and_Tc(1, UART1_DATA[14], 0);
+                break;
+            case 0x010B: //ÈÕ³öÈÕÂäÉè¶¨ÒªÇó
+            case 0x010C: //ÈÕ³öÈÕÂäÈ¡µÃÒªÇó
+                if (UART1_DATA[8] == 0x0B) {
+                    for (i = 8; i < 16 + UART1_DATA[15]*3; i++) m += UART1_DATA[i];
+                    n = UART1_DATA[16 + UART1_DATA[15]*3] + UART1_DATA[17 + UART1_DATA[15]*3]*256;
+                } else {
+                    for (i = 8; i < 11; i++) m += UART1_DATA[i];
+                    n = UART1_DATA[11] + UART1_DATA[12]*256;
                 }
-            }
-            else
-            {
-                uart_send_APP_Public(UART1_DATA[8], 1);
-                FLAG_UART_ok = 0;
-            }
-            break;
-        case 0x0104: //RTC_read
-        case 0x0105: //RTC_write
-            if (UART1_DATA[8] == 0x04)
-            {
-                for (i = 8; i < 11; i++)
-                    m += UART1_DATA[i];
-                n = UART1_DATA[11] + UART1_DATA[12] * 256;
-            }
-            else
-            {
-                for (i = 8; i < 18; i++)
-                    m += UART1_DATA[i];
-                n = UART1_DATA[18] + UART1_DATA[19] * 256;
-            }
-            if (m == n)
-            {
-                if (UART1_DATA[8] == 0x05)
-                {
-                    Set_Time(&UART1_DATA[11]); //==0x00  Ð´Ê±ÖÓ
-                    SUN_time_get(SUN_ON_OFF_seat[2]);
-                    Read_Time(&xm00[0]);
-                    //RTC_Minutes00=xm00[2]*60+xm00[1];
-                    RTC_Minutes00 = Hex_Decimal(xm00[2], xm00[1]); //2014.10.11ÐÞ¸Ä   ½â¾öTIMERÓÐÊ±²»¶¯×÷
-                    NEW_set_alarm_pcf8563(RTC_Minutes00);
-                    uart_send_APP_Public(0x05, 0);
+                if (m == n) {
+                    if (UART1_DATA[8] == 0x0B) {
+                        if ((UART1_DATA[13] > 10) || (UART1_DATA[14] > 0x80) || (UART1_DATA[15] > 32))uart_send_APP_Public(0x0B, 1);
+                        else {
+                            eeprom_IDcheck_Multiple(15);
+                            if (FLAG_IDCheck_OK == 1) {
+                                FLAG_IDCheck_OK = 0;
+                                SUN_EEPROM_write();
+                                if (FLAG_Write_Read_compare == 1)uart_send_APP_Public(0x0B, 0);
+                                else uart_send_APP_Public(0x0B, 1);
+                            } else uart_send_APP_Public(0x0B, 1);
+                        }
+                    } else uart_send_APP_SUN();
+                } else uart_send_APP_Public(UART1_DATA[8], 1);
+                break;
+            case 0x010D: //¾íÁ±ÃÅ×´Ì¬±ä»¯ÊÇ·ñÓÊ¼þËÍÐÅÉè¶¨
+            case 0x010E: //¾íÁ±ÃÅ×´Ì¬±ä»¯ÊÇ·ñÓÊ¼þËÍÐÅÈ¡µÃ
+                if (UART1_DATA[8] == 0x0D) {
+                    for (i = 8; i < 14; i++) m += UART1_DATA[i];
+                    n = UART1_DATA[14] + UART1_DATA[15]*256;
+                } else {
+                    for (i = 8; i < 11; i++) m += UART1_DATA[i];
+                    n = UART1_DATA[11] + UART1_DATA[12]*256;
                 }
-                else if (UART1_DATA[8] == 0x04)
-                { //==0x01  ¶ÁÊ±ÖÓ
-                    Read_Time(number_time);
+                if (m == n) {
+                    if (UART1_DATA[8] == 0x0D) {
+                        HA_Change_EEPROM_write();
+                        if (FLAG_Write_Read_compare == 1)uart_send_APP_Public(0x0D, 0);
+                        else uart_send_APP_Public(0x0D, 1);
+                    } else uart_send_APP_HA_Change();
+                } else uart_send_APP_Public(UART1_DATA[8], 1);
+                break;
+            case 0x0103: //APP»ñÈ¡¾íÁ±ÃÅIDÈ«²¿
+                for (i = 8; i < 11; i++) m += UART1_DATA[i];
+                n = UART1_DATA[11] + UART1_DATA[12]*256;
+                if (m == n) {
+                    uart_send_APP_allID();
+                } else uart_send_APP_Public(0x03, 1);
+                break;
+            case 0x010F: //APP»ñÈ¡Èí¼þ°æ±¾
+                for (i = 8; i < 11; i++) m += UART1_DATA[i];
+                n = UART1_DATA[11] + UART1_DATA[12]*256;
+                if (m == n) {
                     uart_send_APP_Head();
-                    U1TXREG = 10;
+                    U1TXREG = 0x09;
                     U1TXREG = 0x00;
                     Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-                    U1TXREG = 0x04;
+                    U1TXREG = 0x0F;
+                    U1TXREG = 0x01;
+                    U1TXREG = 0x00;
+                    U1TXREG = 0x56; //V
+                    U1TXREG = 0x65; //e
+                    U1TXREG = 0x72; //r
+                    Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+                    U1TXREG = 0x36; //6              //2014.10.11ÐÞ¸Ä
+                    U1TXREG = 0x2E; //.
+                    U1TXREG = 0x37; //7
+                    U1TXREG = 0xD8; //0x16B+0x33+0x39
+                    U1TXREG = 0x01;
+                } else uart_send_APP_Public(0x0F, 1);
+                break;
+            case 0x0108: //Ò»Æë²Ù×÷
+                for (i = 8; i < 13 + UART1_DATA[12]*3; i++) m += UART1_DATA[i];
+                n = UART1_DATA[13 + UART1_DATA[12]*3] + UART1_DATA[14 + UART1_DATA[12]*3]*256;
+                if (m == n) {
+                    eeprom_IDcheck_Multiple(12);
+                    if (FLAG_IDCheck_OK == 1) {
+                        FLAG_IDCheck_OK = 0;
+                        uart_send_APP_Public(0x08, 0);
+                        uart_Control_code = UART1_DATA[11];
+                        for (i = 0; i < UART1_DATA[12]; i++) APP_UART_OUT(i); //2015.4.11×·¼ÓÐÞÕý3
+                        //for(i=UART1_DATA[12];i>0;i--) APP_UART_OUT(i-1);
+                    } else uart_send_APP_Public(0x08, 1);
+                } else uart_send_APP_Public(0x08, 1);
+                break;
+            case 0x01F0: //ÈÕ³öÈÕÂä±í¸ñÊý¾ÝDATAÉèÖÃ
+                for (i = 8; i < 491; i++) m += UART1_DATA[i];
+                n = UART1_DATA[491] + UART1_DATA[492]*256;
+                if (m == n) {
+                    Sunrise_sunset_EEPROM_write();
+                    uart_send_APP_Public(0xF0, 0);
+                } else uart_send_APP_Public(0xF0, 1);
+                break;
+            case 0x01F1: //ÈÕ³öÈÕÂä±í¸ñÊý¾ÝDATAÈ¡µÃ
+                for (i = 8; i < 11; i++) m += UART1_DATA[i];
+                n = UART1_DATA[11] + UART1_DATA[12]*256;
+                if (m == n) {
+                    uart_send_APP_Head();
+                    U1TXREG = 0xE3;
+                    U1TXREG = 0x01;
+                    Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+                    U1TXREG = 0xF1;
                     U1TXREG = 0x01;
                     U1TXREG = 0x00;
                     Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
                     m = 0;
-                    for (i = 0; i < 7; i++)
-                    {
-                        U1TXREG = number_time[i];
-                        m = m + number_time[i];
+                    for (i = 0; i < 480; i++) {
+                        U1TXREG = Sunrise_sunset_DATA[i];
+                        m = m + Sunrise_sunset_DATA[i];
+                        if (i % 6 == 5)Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
                     }
-                    Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-                    m = m + 0x05;
+                    m = m + 0xF2;
                     U1TXREG = m % 256;
                     U1TXREG = m / 256;
-                }
-            }
-            else
-                uart_send_APP_Public(UART1_DATA[8], 1);
-            break;
-        case 0x0106: //¿ØÖÆ¶¨Ê±Æ÷Éè¶¨ÒªÇó
-        case 0x0107: //¿ØÖÆ¶¨Ê±Æ÷È¡µÃÒªÇó
-            if (UART1_DATA[8] == 0x06)
-            {
-                for (i = 8; i < 18 + UART1_DATA[17] * 3; i++)
-                    m += UART1_DATA[i];
-                n = UART1_DATA[18 + UART1_DATA[17] * 3] + UART1_DATA[19 + UART1_DATA[17] * 3] * 256;
-            }
-            else
-            {
-                for (i = 8; i < 12; i++)
-                    m += UART1_DATA[i];
-                n = UART1_DATA[12] + UART1_DATA[13] * 256;
-            }
-            if (m == n)
-            {
-                if (UART1_DATA[8] == 0x06)
-                {
-                    //if((UART1_DATA[11]==0)||(UART1_DATA[11]>0x0A)||(UART1_DATA[12]>1)||(UART1_DATA[13]>9)||(UART1_DATA[14]>25)||(UART1_DATA[15]>60)||(UART1_DATA[17]==0))
-                    if ((UART1_DATA[11] == 0) || (UART1_DATA[11] > 0x0A) || (UART1_DATA[14] > 0x25) || (UART1_DATA[15] > 0x60))
-                        uart_send_APP_Public(0x06, 1);
-                    else
-                    {
-                        eeprom_IDcheck_Multiple(17);
-                        if (FLAG_IDCheck_OK == 1)
-                        {
-                            FLAG_IDCheck_OK = 0;
-                            alarm_EEPROM_write();
-                            if (FLAG_Write_Read_compare == 1)
-                                uart_send_APP_Public(0x06, 0);
-                            else
-                                uart_send_APP_Public(0x06, 1);
-                        }
-                        else
-                            uart_send_APP_Public(0x06, 1);
-                    }
-                }
-                else
-                    uart_send_APP_allalarm();
-            }
-            else
-                uart_send_APP_Public(UART1_DATA[8], 1);
-            break;
-        case 0x0109: //ÓÊ¼þ¶¨Ê±Æ÷Éè¶¨ÒªÇó
-        case 0x010A: //ÓÊ¼þ¶¨Ê±Æ÷È¡µÃÒªÇó
-            if (UART1_DATA[8] == 0x09)
-            {
-                for (i = 8; i < 18; i++)
-                    m += UART1_DATA[i];
-                n = UART1_DATA[18] + UART1_DATA[19] * 256;
-            }
-            else
-            {
-                for (i = 8; i < 12; i++)
-                    m += UART1_DATA[i];
-                n = UART1_DATA[12] + UART1_DATA[13] * 256;
-            }
-            if (m == n)
-            {
-                if (UART1_DATA[8] == 0x09)
-                {
-                    if ((UART1_DATA[11] == 0) || (UART1_DATA[11] > 0x0A) || (UART1_DATA[13] > 0x25) || (UART1_DATA[14] > 0x60))
-                        uart_send_APP_Public(0x09, 1);
-                    else
-                    {
-                        Emial_time_EEPROM_write();
-                        if (FLAG_Write_Read_compare == 1)
-                            uart_send_APP_Public(0x09, 0);
-                        else
-                            uart_send_APP_Public(0x09, 1);
-                    }
-                }
-                else
-                    uart_send_APP_Emial_time();
-            }
-            else
-                uart_send_APP_Public(UART1_DATA[8], 1);
-            break;
-        case 0x0111: //ÒÔÏÂ2015.08.21×·¼Ó        //°ë¿ªTo °ë±ÕTcÉè¶¨ºÍ¶ÁÈ¡
-            for (i = 8; i < 16; i++)
-                m += UART1_DATA[i];
-            n = UART1_DATA[16] + UART1_DATA[17] * 256;
-            if (m == n)
-            {
-                ID_data_uart_CMD0111.IDB[0] = UART1_DATA[11];
-                ID_data_uart_CMD0111.IDB[1] = UART1_DATA[12];
-                ID_data_uart_CMD0111.IDB[2] = UART1_DATA[13];
-                ID_data_uart_CMD0111.IDB[3] = 0x00;
-                eeprom_IDcheck_CMD0111_UART();
-                if (FLAG_IDCheck_OK == 1)
-                {
-                    if (((UART1_DATA[14] == 1) || (UART1_DATA[14] == 3)) && (UART1_DATA[15] != 0))
-                    {
-                        EEPROM_write_To_or_Tc(ID_DATA_To_or_Tc_place, UART1_DATA[14], UART1_DATA[15]);
-                        uart_send_APP_To_and_Tc(0, UART1_DATA[14], 0);
-                    }
-                    else if (UART1_DATA[14] == 2)
-                        uart_send_APP_To_and_Tc(0, UART1_DATA[14], ID_DATA_To[ID_DATA_To_or_Tc_place]);
-                    else if (UART1_DATA[14] == 4)
-                        uart_send_APP_To_and_Tc(0, UART1_DATA[14], ID_DATA_Tc[ID_DATA_To_or_Tc_place]);
-                    else
-                        uart_send_APP_To_and_Tc(1, UART1_DATA[14], 0);
-                }
-                else
-                    uart_send_APP_To_and_Tc(1, UART1_DATA[14], 0);
-            }
-            else
-                uart_send_APP_To_and_Tc(1, UART1_DATA[14], 0);
-            break;
-        case 0x010B: //ÈÕ³öÈÕÂäÉè¶¨ÒªÇó
-        case 0x010C: //ÈÕ³öÈÕÂäÈ¡µÃÒªÇó
-            if (UART1_DATA[8] == 0x0B)
-            {
-                for (i = 8; i < 16 + UART1_DATA[15] * 3; i++)
-                    m += UART1_DATA[i];
-                n = UART1_DATA[16 + UART1_DATA[15] * 3] + UART1_DATA[17 + UART1_DATA[15] * 3] * 256;
-            }
-            else
-            {
-                for (i = 8; i < 11; i++)
-                    m += UART1_DATA[i];
-                n = UART1_DATA[11] + UART1_DATA[12] * 256;
-            }
-            if (m == n)
-            {
-                if (UART1_DATA[8] == 0x0B)
-                {
-                    if ((UART1_DATA[13] > 10) || (UART1_DATA[14] > 0x80) || (UART1_DATA[15] > 32))
-                        uart_send_APP_Public(0x0B, 1);
-                    else
-                    {
-                        eeprom_IDcheck_Multiple(15);
-                        if (FLAG_IDCheck_OK == 1)
-                        {
-                            FLAG_IDCheck_OK = 0;
-                            SUN_EEPROM_write();
-                            if (FLAG_Write_Read_compare == 1)
-                                uart_send_APP_Public(0x0B, 0);
-                            else
-                                uart_send_APP_Public(0x0B, 1);
-                        }
-                        else
-                            uart_send_APP_Public(0x0B, 1);
-                    }
-                }
-                else
-                    uart_send_APP_SUN();
-            }
-            else
-                uart_send_APP_Public(UART1_DATA[8], 1);
-            break;
-        case 0x010D: //¾íÁ±ÃÅ×´Ì¬±ä»¯ÊÇ·ñÓÊ¼þËÍÐÅÉè¶¨
-        case 0x010E: //¾íÁ±ÃÅ×´Ì¬±ä»¯ÊÇ·ñÓÊ¼þËÍÐÅÈ¡µÃ
-            if (UART1_DATA[8] == 0x0D)
-            {
-                for (i = 8; i < 14; i++)
-                    m += UART1_DATA[i];
-                n = UART1_DATA[14] + UART1_DATA[15] * 256;
-            }
-            else
-            {
-                for (i = 8; i < 11; i++)
-                    m += UART1_DATA[i];
-                n = UART1_DATA[11] + UART1_DATA[12] * 256;
-            }
-            if (m == n)
-            {
-                if (UART1_DATA[8] == 0x0D)
-                {
-                    HA_Change_EEPROM_write();
-                    if (FLAG_Write_Read_compare == 1)
-                        uart_send_APP_Public(0x0D, 0);
-                    else
-                        uart_send_APP_Public(0x0D, 1);
-                }
-                else
-                    uart_send_APP_HA_Change();
-            }
-            else
-                uart_send_APP_Public(UART1_DATA[8], 1);
-            break;
-        case 0x0103: //APP»ñÈ¡¾íÁ±ÃÅIDÈ«²¿
-            for (i = 8; i < 11; i++)
-                m += UART1_DATA[i];
-            n = UART1_DATA[11] + UART1_DATA[12] * 256;
-            if (m == n)
-            {
-                uart_send_APP_allID();
-            }
-            else
-                uart_send_APP_Public(0x03, 1);
-            break;
-        case 0x010F: //APP»ñÈ¡Èí¼þ°æ±¾
-            for (i = 8; i < 11; i++)
-                m += UART1_DATA[i];
-            n = UART1_DATA[11] + UART1_DATA[12] * 256;
-            if (m == n)
-            {
-                uart_send_APP_Head();
-                U1TXREG = 0x09;
-                U1TXREG = 0x00;
-                Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-                U1TXREG = 0x0F;
-                U1TXREG = 0x01;
-                U1TXREG = 0x00;
-                U1TXREG = 0x56; //V
-                U1TXREG = 0x65; //e
-                U1TXREG = 0x72; //r
-                Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-                U1TXREG = 0x36; //6              //2014.10.11ÐÞ¸Ä
-                U1TXREG = 0x2E; //.
-                U1TXREG = 0x37; //7
-                U1TXREG = 0xD8; //0x16B+0x33+0x39
-                U1TXREG = 0x01;
-            }
-            else
-                uart_send_APP_Public(0x0F, 1);
-            break;
-        case 0x0108: //Ò»Æë²Ù×÷
-            for (i = 8; i < 13 + UART1_DATA[12] * 3; i++)
-                m += UART1_DATA[i];
-            n = UART1_DATA[13 + UART1_DATA[12] * 3] + UART1_DATA[14 + UART1_DATA[12] * 3] * 256;
-            if (m == n)
-            {
-                eeprom_IDcheck_Multiple(12);
-                if (FLAG_IDCheck_OK == 1)
-                {
-                    FLAG_IDCheck_OK = 0;
-                    uart_send_APP_Public(0x08, 0);
-                    uart_Control_code = UART1_DATA[11];
-                    for (i = 0; i < UART1_DATA[12]; i++)
-                        APP_UART_OUT(i); //2015.4.11×·¼ÓÐÞÕý3
-                    //for(i=UART1_DATA[12];i>0;i--) APP_UART_OUT(i-1);
-                }
-                else
-                    uart_send_APP_Public(0x08, 1);
-            }
-            else
-                uart_send_APP_Public(0x08, 1);
-            break;
-        case 0x01F0: //ÈÕ³öÈÕÂä±í¸ñÊý¾ÝDATAÉèÖÃ
-            for (i = 8; i < 491; i++)
-                m += UART1_DATA[i];
-            n = UART1_DATA[491] + UART1_DATA[492] * 256;
-            if (m == n)
-            {
-                Sunrise_sunset_EEPROM_write();
-                uart_send_APP_Public(0xF0, 0);
-            }
-            else
-                uart_send_APP_Public(0xF0, 1);
-            break;
-        case 0x01F1: //ÈÕ³öÈÕÂä±í¸ñÊý¾ÝDATAÈ¡µÃ
-            for (i = 8; i < 11; i++)
-                m += UART1_DATA[i];
-            n = UART1_DATA[11] + UART1_DATA[12] * 256;
-            if (m == n)
-            {
-                uart_send_APP_Head();
-                U1TXREG = 0xE3;
-                U1TXREG = 0x01;
-                Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-                U1TXREG = 0xF1;
-                U1TXREG = 0x01;
-                U1TXREG = 0x00;
-                Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-                m = 0;
-                for (i = 0; i < 480; i++)
-                {
-                    U1TXREG = Sunrise_sunset_DATA[i];
-                    m = m + Sunrise_sunset_DATA[i];
-                    if (i % 6 == 5)
-                        Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-                }
-                m = m + 0xF2;
-                U1TXREG = m % 256;
-                U1TXREG = m / 256;
-            }
-            else
-                uart_send_APP_Public(0xF1, 1);
-            break;
-        default:
-            break;
+                } else uart_send_APP_Public(0xF1, 1);
+                break;
+            default:
+                break;
         }
-    }
-    /*****2013Äê11ÔÂ22ÈÕÐÞ¸Ä  Ìá¸ßEmialÎÈ¶¨ÐÔ****/
-    else if (UART1_DATA[2] == 0x20)
-    {
-        for (i = 0; i < 10; i++)
-        {
-            if (UART1_DATA[i] == Emial_uart[i])
-                ;
-            else
-                return;
+    }/*****2013Äê11ÔÂ22ÈÕÐÞ¸Ä  Ìá¸ßEmialÎÈ¶¨ÐÔ****/
+    else if (UART1_DATA[2] == 0x20) {
+        for (i = 0; i < 10; i++) {
+            if (UART1_DATA[i] == Emial_uart[i]);
+            else return;
         }
         FLAG_email_Repeat = 0;
     }
-/******************************************/
+    /******************************************/
 #endif
 }
 
-void HA_uart_email(UINT8 EMIAL_id_PCS_x)
-{
+void HA_uart_email(UINT8 EMIAL_id_PCS_x) {
 #if defined(__Product_PIC32MX2_WIFI__)
     /*
-    UINT8 h,l;
-    UINT8 h1,bc[8];
-    UINT16 m,i,j;
-    UINT32 h0;
+     UINT8 h,l;
+     UINT8 h1,bc[8];
+     UINT16 m,i,j;
+     UINT32 h0;
 
-    //uart_send_APP_Public(0xFF,0);               //²âÊÔÊÇ·ñ·¢ËÍÁËÓÊ¼þ
-    Delay100us(30);
+     //uart_send_APP_Public(0xFF,0);               //²âÊÔÊÇ·ñ·¢ËÍÁËÓÊ¼þ
+     Delay100us(30);
 
-//    HA_uart[8]=HA_Change_send_email[1];       //µ÷ÓÃ¸Ã¸Ãº¯ÊýÖ®Ç°  ¶Ô½ÓÊÕÓÊ¼þµØÖ·±àºÅ½øÐÐÉèÖÃ
-//    HA_uart[9]=HA_Change_send_email[2];
+ //    HA_uart[8]=HA_Change_send_email[1];       //µ÷ÓÃ¸Ã¸Ãº¯ÊýÖ®Ç°  ¶Ô½ÓÊÕÓÊ¼þµØÖ·±àºÅ½øÐÐÉèÖÃ
+ //    HA_uart[9]=HA_Change_send_email[2];
 
-    Read_Time(number_time);           //¼ÆËãÓÊ¼þ±êÌâ
-    for(i=1;i<7;i++){
-        if(i!=4){
-            h=number_time[i];
-            if(i<=3)j=24-(i-1)*3;
-            else j=24-(i-2)*3;
-            l=h&0x0F;
-            HA_uart[j+1]=l+0x30;
-            h=h&0xF0;
-            h=h>>4;
-            HA_uart[j]=h+0x30;
-        }
-    }
-    HA_uart[26]=0x00;   //ÓÊ¼þ±êÌâ½áÊø·û
+     Read_Time(number_time);           //¼ÆËãÓÊ¼þ±êÌâ
+     for(i=1;i<7;i++){
+         if(i!=4){
+             h=number_time[i];
+             if(i<=3)j=24-(i-1)*3;
+             else j=24-(i-2)*3;
+             l=h&0x0F;
+             HA_uart[j+1]=l+0x30;
+             h=h&0xF0;
+             h=h>>4;
+             HA_uart[j]=h+0x30;
+         }
+     }
+     HA_uart[26]=0x00;   //ÓÊ¼þ±êÌâ½áÊø·û
 
-    //HA_uart_Length=63+8;
-    HA_uart_Length=63+15;
-    //HA_uart_Length=63+8+3;
-    for(j=0;j<EMIAL_id_PCS_x;j++){                      //¼ÆËãÓÊ¼þÄÚÈÝµÄatatus=...²¿·Ö
-        if((EMIAL_id_HA[j]==0x81)||(EMIAL_id_HA[j]==0x85)){
-            HA_uart[HA_uart_Length]=111;      //open
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=112;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=101;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=110;
-            HA_uart_Length++;
-        }
-        else if((EMIAL_id_HA[j]==0x82)||(EMIAL_id_HA[j]==0x86)){
-            HA_uart[HA_uart_Length]=99;      //close
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=108;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=111;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=115;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=101;
-            HA_uart_Length++;
-        }
-   #if defined(__32MX230F064D__)
-        else if((EMIAL_id_HA[j]==0x83)||(EMIAL_id_HA[j]==0x87)||(EMIAL_id_HA[j]==0x84)||(EMIAL_id_HA[j]==0x88)){
-            HA_uart[HA_uart_Length]=101;      //error
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=114;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=114;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=111;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=114;
-            HA_uart_Length++;
-        }
-    #endif
-    #if defined(__32MX250F128D__)
-        else if((EMIAL_id_HA[j]==0x83)||(EMIAL_id_HA[j]==0x87)){
-            HA_uart[HA_uart_Length]=101;      //error1
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=114;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=114;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=111;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=114;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=49;
-            HA_uart_Length++;
-        }
-        else if((EMIAL_id_HA[j]==0x84)||(EMIAL_id_HA[j]==0x88)){
-            HA_uart[HA_uart_Length]=101;      //error2
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=114;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=114;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=111;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=114;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=50;
-            HA_uart_Length++;
-        }
-        else if((EMIAL_id_HA[j]==0xFF)||(EMIAL_id_HA[j]==0x00)){
-            HA_uart[HA_uart_Length]=102;      //fail
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=97;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=105;
-            HA_uart_Length++;
-            HA_uart[HA_uart_Length]=108;
-            HA_uart_Length++;
-        }
-    #endif
+     //HA_uart_Length=63+8;
+     HA_uart_Length=63+15;
+     //HA_uart_Length=63+8+3;
+     for(j=0;j<EMIAL_id_PCS_x;j++){                      //¼ÆËãÓÊ¼þÄÚÈÝµÄatatus=...²¿·Ö
+         if((EMIAL_id_HA[j]==0x81)||(EMIAL_id_HA[j]==0x85)){
+             HA_uart[HA_uart_Length]=111;      //open
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=112;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=101;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=110;
+             HA_uart_Length++;
+         }
+         else if((EMIAL_id_HA[j]==0x82)||(EMIAL_id_HA[j]==0x86)){
+             HA_uart[HA_uart_Length]=99;      //close
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=108;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=111;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=115;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=101;
+             HA_uart_Length++;
+         }
+    #if defined(__32MX230F064D__)
+         else if((EMIAL_id_HA[j]==0x83)||(EMIAL_id_HA[j]==0x87)||(EMIAL_id_HA[j]==0x84)||(EMIAL_id_HA[j]==0x88)){
+             HA_uart[HA_uart_Length]=101;      //error
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=114;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=114;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=111;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=114;
+             HA_uart_Length++;
+         }
+     #endif
+     #if defined(__32MX250F128D__)
+         else if((EMIAL_id_HA[j]==0x83)||(EMIAL_id_HA[j]==0x87)){
+             HA_uart[HA_uart_Length]=101;      //error1
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=114;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=114;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=111;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=114;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=49;
+             HA_uart_Length++;
+         }
+         else if((EMIAL_id_HA[j]==0x84)||(EMIAL_id_HA[j]==0x88)){
+             HA_uart[HA_uart_Length]=101;      //error2
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=114;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=114;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=111;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=114;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=50;
+             HA_uart_Length++;
+         }
+         else if((EMIAL_id_HA[j]==0xFF)||(EMIAL_id_HA[j]==0x00)){
+             HA_uart[HA_uart_Length]=102;      //fail
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=97;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=105;
+             HA_uart_Length++;
+             HA_uart[HA_uart_Length]=108;
+             HA_uart_Length++;
+         }
+     #endif
 
 
-        if(j!=(EMIAL_id_PCS_x-1)){
-            HA_uart[HA_uart_Length]=44;   //,
-            HA_uart_Length++;
+         if(j!=(EMIAL_id_PCS_x-1)){
+             HA_uart[HA_uart_Length]=44;   //,
+             HA_uart_Length++;
+         }
+     }
+
+     HA_uart[HA_uart_Length]=38;   //&id=
+     HA_uart_Length++;
+     HA_uart[HA_uart_Length]=105;
+     HA_uart_Length++;
+     HA_uart[HA_uart_Length]=100;
+     HA_uart_Length++;
+     HA_uart[HA_uart_Length]=61;
+     HA_uart_Length++;      
+
+     for(j=0;j<EMIAL_id_PCS_x;j++){      //¼ÆËãÓÊ¼þÄÚÈÝµÄ&id=...²¿·Ö
+         h0=EMIAL_id_data[j];
+         h1=0;
+         for(i=8;i>0;i--){
+             h=h0%10;
+             bc[h1]=h+0x30;
+             h1++;
+             h0=h0/10;
+             if(h0==0)i=1;
+         }
+         for(i=h1;i>0;i--){
+             HA_uart[HA_uart_Length]=bc[i-1];
+             HA_uart_Length++;
+         }
+         if(j!=(EMIAL_id_PCS_x-1)){
+             HA_uart[HA_uart_Length]=44;   //,
+             HA_uart_Length++;
+         }
+     }
+     HA_uart[HA_uart_Length]=0x00;   //ÓÊ¼þÄÚÈÝ½áÊø·û
+     HA_uart_Length++;
+
+     m=HA_uart_Length-8;            //¼ÆËãÊý¾Ý³¤¶È
+     HA_uart[6]=m%256;
+     HA_uart[7]=m/256;
+
+     m=0;                       //¼ÆËãCRC16
+     for(i=8;i<HA_uart_Length;i++)m=m+HA_uart[i];
+     HA_uart[HA_uart_Length]=m%256;
+     HA_uart[HA_uart_Length+1]=m/256;
+
+     j=HA_uart_Length+2;
+     if(ID_DATA_PCS!=0){
+         for(i=0;i<j;i++){
+             U1TXREG=HA_uart[i];
+             if(i%6==0)Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+         }
+     }
+        Delay100us(300);
+        TIME_email_Repeat=9000;
+        FLAG_email_Repeat=1;
+        UART_send_count=0;
+
+        for(i=0;i<35;i++){
+            Email_check_ID[i]=EMIAL_id_data[i];
+            //EMIAL_id_data[i]=0;    //20150430 japanÐÞ¸Ä2
+            Emial_check_Control[i]=EMIAL_id_HA[i];
+            EMIAL_id_HA[i]=0;
         }
-    }
+        EMIAL_id_PCS=0;
+   // HA_uart_send_APP();
+     */
 
-    HA_uart[HA_uart_Length]=38;   //&id=
-    HA_uart_Length++;
-    HA_uart[HA_uart_Length]=105;
-    HA_uart_Length++;
-    HA_uart[HA_uart_Length]=100;
-    HA_uart_Length++;
-    HA_uart[HA_uart_Length]=61;
-    HA_uart_Length++;      
-
-    for(j=0;j<EMIAL_id_PCS_x;j++){      //¼ÆËãÓÊ¼þÄÚÈÝµÄ&id=...²¿·Ö
-        h0=EMIAL_id_data[j];
-        h1=0;
-        for(i=8;i>0;i--){
-            h=h0%10;
-            bc[h1]=h+0x30;
-            h1++;
-            h0=h0/10;
-            if(h0==0)i=1;
-        }
-        for(i=h1;i>0;i--){
-            HA_uart[HA_uart_Length]=bc[i-1];
-            HA_uart_Length++;
-        }
-        if(j!=(EMIAL_id_PCS_x-1)){
-            HA_uart[HA_uart_Length]=44;   //,
-            HA_uart_Length++;
-        }
-    }
-    HA_uart[HA_uart_Length]=0x00;   //ÓÊ¼þÄÚÈÝ½áÊø·û
-    HA_uart_Length++;
-
-    m=HA_uart_Length-8;            //¼ÆËãÊý¾Ý³¤¶È
-    HA_uart[6]=m%256;
-    HA_uart[7]=m/256;
-
-    m=0;                       //¼ÆËãCRC16
-    for(i=8;i<HA_uart_Length;i++)m=m+HA_uart[i];
-    HA_uart[HA_uart_Length]=m%256;
-    HA_uart[HA_uart_Length+1]=m/256;
-
-    j=HA_uart_Length+2;
-    if(ID_DATA_PCS!=0){
-        for(i=0;i<j;i++){
-            U1TXREG=HA_uart[i];
-            if(i%6==0)Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-        }
-    }
-       Delay100us(300);
-       TIME_email_Repeat=9000;
-       FLAG_email_Repeat=1;
-       UART_send_count=0;
-
-       for(i=0;i<35;i++){
-           Email_check_ID[i]=EMIAL_id_data[i];
-           //EMIAL_id_data[i]=0;    //20150430 japanÐÞ¸Ä2
-           Emial_check_Control[i]=EMIAL_id_HA[i];
-           EMIAL_id_HA[i]=0;
-       }
-       EMIAL_id_PCS=0;
-  // HA_uart_send_APP();
-*/
 
     UINT8 h, l;
     UINT8 h1, bc[8];
@@ -974,15 +750,11 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
     //    HA_uart[9]=HA_Change_send_email[2];
 
     Read_Time(number_time); //¼ÆËãÓÊ¼þ±êÌâ
-    for (i = 1; i < 7; i++)
-    {
-        if (i != 4)
-        {
+    for (i = 1; i < 7; i++) {
+        if (i != 4) {
             h = number_time[i];
-            if (i <= 3)
-                j = 24 - (i - 1) * 3;
-            else
-                j = 24 - (i - 2) * 3;
+            if (i <= 3)j = 24 - (i - 1)*3;
+            else j = 24 - (i - 2)*3;
             l = h & 0x0F;
             HA_uart[j + 1] = l + 0x30;
             h = h & 0xF0;
@@ -994,10 +766,8 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
 
     //HA_uart_Length=27+23+19;
     HA_uart_Length = 27 + 27 + 19;
-    for (j = 0; j < EMIAL_id_PCS_x; j++)
-    { //¼ÆËãÓÊ¼þÄÚÈÝµÄatatus=...²¿·Ö
-        if ((EMIAL_id_HA[j] == 0x81) || (EMIAL_id_HA[j] == 0x85))
-        {
+    for (j = 0; j < EMIAL_id_PCS_x; j++) { //¼ÆËãÓÊ¼þÄÚÈÝµÄatatus=...²¿·Ö
+        if ((EMIAL_id_HA[j] == 0x81) || (EMIAL_id_HA[j] == 0x85)) {
             HA_uart[HA_uart_Length] = 111; //open
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 112;
@@ -1006,9 +776,7 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 110;
             HA_uart_Length++;
-        }
-        else if ((EMIAL_id_HA[j] == 0x82) || (EMIAL_id_HA[j] == 0x86))
-        {
+        } else if ((EMIAL_id_HA[j] == 0x82) || (EMIAL_id_HA[j] == 0x86)) {
             HA_uart[HA_uart_Length] = 99; //close
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 108;
@@ -1019,10 +787,8 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 101;
             HA_uart_Length++;
-        }
-#if defined(__32MX230F064D__)
-        else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87) || (EMIAL_id_HA[j] == 0x84) || (EMIAL_id_HA[j] == 0x88))
-        {
+        }#if defined(__32MX230F064D__)
+        else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87) || (EMIAL_id_HA[j] == 0x84) || (EMIAL_id_HA[j] == 0x88)) {
             HA_uart[HA_uart_Length] = 101; //error
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 114;
@@ -1033,11 +799,9 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 114;
             HA_uart_Length++;
-        }
-#endif
+        }#endif
 #if defined(__32MX250F128D__)
-        else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87))
-        {
+        else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87)) {
             HA_uart[HA_uart_Length] = 101; //error1
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 114;
@@ -1050,9 +814,7 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 49;
             HA_uart_Length++;
-        }
-        else if ((EMIAL_id_HA[j] == 0x84) || (EMIAL_id_HA[j] == 0x88))
-        {
+        } else if ((EMIAL_id_HA[j] == 0x84) || (EMIAL_id_HA[j] == 0x88)) {
             HA_uart[HA_uart_Length] = 101; //error2
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 114;
@@ -1065,9 +827,7 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 50;
             HA_uart_Length++;
-        }
-        else if ((EMIAL_id_HA[j] == 0xFF) || (EMIAL_id_HA[j] == 0x00))
-        {
+        } else if ((EMIAL_id_HA[j] == 0xFF) || (EMIAL_id_HA[j] == 0x00)) {
             HA_uart[HA_uart_Length] = 102; //fail
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 97;
@@ -1079,8 +839,8 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
         }
 #endif
 
-        if (j != (EMIAL_id_PCS_x - 1))
-        {
+
+        if (j != (EMIAL_id_PCS_x - 1)) {
             HA_uart[HA_uart_Length] = 44; //,
             HA_uart_Length++;
         }
@@ -1095,26 +855,21 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
     HA_uart[HA_uart_Length] = 61;
     HA_uart_Length++;
 
-    for (j = 0; j < EMIAL_id_PCS_x; j++)
-    { //¼ÆËãÓÊ¼þÄÚÈÝµÄ&id=...²¿·Ö
+    for (j = 0; j < EMIAL_id_PCS_x; j++) { //¼ÆËãÓÊ¼þÄÚÈÝµÄ&id=...²¿·Ö
         h0 = EMIAL_id_data[j];
         h1 = 0;
-        for (i = 8; i > 0; i--)
-        {
+        for (i = 8; i > 0; i--) {
             h = h0 % 10;
             bc[h1] = h + 0x30;
             h1++;
             h0 = h0 / 10;
-            if (h0 == 0)
-                i = 1;
+            if (h0 == 0)i = 1;
         }
-        for (i = h1; i > 0; i--)
-        {
+        for (i = h1; i > 0; i--) {
             HA_uart[HA_uart_Length] = bc[i - 1];
             HA_uart_Length++;
         }
-        if (j != (EMIAL_id_PCS_x - 1))
-        {
+        if (j != (EMIAL_id_PCS_x - 1)) {
             HA_uart[HA_uart_Length] = 44; //,
             HA_uart_Length++;
         }
@@ -1129,15 +884,12 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
     HA_uart[HA_uart_Length] = 10; //»»ÐÐ
     HA_uart_Length++;
     //for(j=0;j<45;j++)
-    for (j = 0; j < 49; j++)
-    {
+    for (j = 0; j < 49; j++) {
         HA_uart[HA_uart_Length] = HA_uart_ios[j];
         HA_uart_Length++;
     }
-    for (j = 0; j < EMIAL_id_PCS_x; j++)
-    { //¼ÆËãÓÊ¼þÄÚÈÝµÄatatus=...²¿·Ö
-        if ((EMIAL_id_HA[j] == 0x81) || (EMIAL_id_HA[j] == 0x85))
-        {
+    for (j = 0; j < EMIAL_id_PCS_x; j++) { //¼ÆËãÓÊ¼þÄÚÈÝµÄatatus=...²¿·Ö
+        if ((EMIAL_id_HA[j] == 0x81) || (EMIAL_id_HA[j] == 0x85)) {
             HA_uart[HA_uart_Length] = 111; //open
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 112;
@@ -1146,9 +898,7 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 110;
             HA_uart_Length++;
-        }
-        else if ((EMIAL_id_HA[j] == 0x82) || (EMIAL_id_HA[j] == 0x86))
-        {
+        } else if ((EMIAL_id_HA[j] == 0x82) || (EMIAL_id_HA[j] == 0x86)) {
             HA_uart[HA_uart_Length] = 99; //close
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 108;
@@ -1159,10 +909,8 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 101;
             HA_uart_Length++;
-        }
-#if defined(__32MX230F064D__)
-        else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87) || (EMIAL_id_HA[j] == 0x84) || (EMIAL_id_HA[j] == 0x88))
-        {
+        }#if defined(__32MX230F064D__)
+        else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87) || (EMIAL_id_HA[j] == 0x84) || (EMIAL_id_HA[j] == 0x88)) {
             HA_uart[HA_uart_Length] = 101; //error
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 114;
@@ -1173,11 +921,9 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 114;
             HA_uart_Length++;
-        }
-#endif
+        }#endif
 #if defined(__32MX250F128D__)
-        else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87))
-        {
+        else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87)) {
             HA_uart[HA_uart_Length] = 101; //error1
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 114;
@@ -1190,9 +936,7 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 49;
             HA_uart_Length++;
-        }
-        else if ((EMIAL_id_HA[j] == 0x84) || (EMIAL_id_HA[j] == 0x88))
-        {
+        } else if ((EMIAL_id_HA[j] == 0x84) || (EMIAL_id_HA[j] == 0x88)) {
             HA_uart[HA_uart_Length] = 101; //error2
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 114;
@@ -1205,9 +949,7 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 50;
             HA_uart_Length++;
-        }
-        else if ((EMIAL_id_HA[j] == 0xFF) || (EMIAL_id_HA[j] == 0x00))
-        {
+        } else if ((EMIAL_id_HA[j] == 0xFF) || (EMIAL_id_HA[j] == 0x00)) {
             HA_uart[HA_uart_Length] = 102; //fail
             HA_uart_Length++;
             HA_uart[HA_uart_Length] = 97;
@@ -1218,8 +960,7 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart_Length++;
         }
 #endif
-        if (j != (EMIAL_id_PCS_x - 1))
-        {
+        if (j != (EMIAL_id_PCS_x - 1)) {
             HA_uart[HA_uart_Length] = 44; //,
             HA_uart_Length++;
         }
@@ -1234,30 +975,26 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
     HA_uart[HA_uart_Length] = 61;
     HA_uart_Length++;
 
-    for (j = 0; j < EMIAL_id_PCS_x; j++)
-    { //¼ÆËãÓÊ¼þÄÚÈÝµÄ&id=...²¿·Ö
+    for (j = 0; j < EMIAL_id_PCS_x; j++) { //¼ÆËãÓÊ¼þÄÚÈÝµÄ&id=...²¿·Ö
         h0 = EMIAL_id_data[j];
         h1 = 0;
-        for (i = 8; i > 0; i--)
-        {
+        for (i = 8; i > 0; i--) {
             h = h0 % 10;
             bc[h1] = h + 0x30;
             h1++;
             h0 = h0 / 10;
-            if (h0 == 0)
-                i = 1;
+            if (h0 == 0)i = 1;
         }
-        for (i = h1; i > 0; i--)
-        {
+        for (i = h1; i > 0; i--) {
             HA_uart[HA_uart_Length] = bc[i - 1];
             HA_uart_Length++;
         }
-        if (j != (EMIAL_id_PCS_x - 1))
-        {
+        if (j != (EMIAL_id_PCS_x - 1)) {
             HA_uart[HA_uart_Length] = 44; //,
             HA_uart_Length++;
         }
     }
+
 
     HA_uart[HA_uart_Length] = 0x00; //ÓÊ¼þÄÚÈÝ½áÊø·û
     HA_uart_Length++;
@@ -1267,20 +1004,16 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
     HA_uart[7] = m / 256;
 
     m = 0; //¼ÆËãCRC16
-    for (i = 8; i < HA_uart_Length; i++)
-        m = m + HA_uart[i];
+    for (i = 8; i < HA_uart_Length; i++)m = m + HA_uart[i];
     HA_uart[HA_uart_Length] = m % 256;
     HA_uart[HA_uart_Length + 1] = m / 256;
 
     j = HA_uart_Length + 2;
-    if (ID_DATA_PCS != 0)
-    {
+    if (ID_DATA_PCS != 0) {
         Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-        for (i = 0; i < j; i++)
-        {
+        for (i = 0; i < j; i++) {
             U1TXREG = HA_uart[i];
-            if (i % 6 == 0)
-                Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+            if (i % 6 == 0)Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
         }
     }
     Delay100us(300);
@@ -1288,33 +1021,30 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
     FLAG_email_Repeat = 1;
     UART_send_count = 0;
 
-    for (i = 0; i < 35; i++)
-    {
+    for (i = 0; i < 35; i++) {
         Email_check_ID[i] = EMIAL_id_data[i];
         //EMIAL_id_data[i]=0;    //20150430 japanÐÞ¸Ä2
         Emial_check_Control[i] = EMIAL_id_HA[i];
         EMIAL_id_HA[i] = 0;
     }
     EMIAL_id_PCS = 0;
-// HA_uart_send_APP();
+    // HA_uart_send_APP();
 #endif
 }
-void HA_uart_email_Repeat(void)
-{
+
+void HA_uart_email_Repeat(void) {
 #if defined(__Product_PIC32MX2_WIFI__)
     UINT8 i;
     //uart_send_APP_Public(0xFF,0);               //²âÊÔÊÇ·ñ·¢ËÍÁËÓÊ¼þ
-    for (i = 0; i < HA_uart_Length + 2; i++)
-    {
+    for (i = 0; i < HA_uart_Length + 2; i++) {
         U1TXREG = HA_uart[i];
-        if (i % 6 == 0)
-            Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+        if (i % 6 == 0)Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
     }
     Delay100us(300);
 #endif
 }
-void HA_uart_send_APP(void)
-{
+
+void HA_uart_send_APP(void) {
 #if defined(__Product_PIC32MX2_WIFI__)
     uni_rom_id b0;
     UINT8 i;
@@ -1327,18 +1057,15 @@ void HA_uart_send_APP(void)
     //    else HA_uart_app[8]=0x01;
 
     HA_uart_app[9] = 0x01;
-    if (UART1_DATA[8] == 0x02)
-        HA_uart_app[8] = 0x02;
-    else
-        HA_uart_app[8] = 0x01;
+    if (UART1_DATA[8] == 0x02)HA_uart_app[8] = 0x02;
+    else HA_uart_app[8] = 0x01;
 
     HA_uart_app[10] = 0x00;
     b0.IDL = DATA_Packet_ID;
     HA_uart_app[11] = b0.IDB[0];
     HA_uart_app[12] = b0.IDB[1];
     HA_uart_app[13] = b0.IDB[2];
-    if ((FLAG_TIME_No_response == 1) && (TIME_No_response == 0))
-    {
+    if ((FLAG_TIME_No_response == 1)&&(TIME_No_response == 0)) {
         HA_uart_app[14] = 05;
         b0.IDL = ID_data.IDL;
         DATA_Packet_ID = ID_data.IDL;
@@ -1346,54 +1073,42 @@ void HA_uart_send_APP(void)
         HA_uart_app[12] = b0.IDB[1];
         HA_uart_app[13] = b0.IDB[2];
         HA_uart_app[15] = 0xFF;
-        if (FG_send_Faile_again == 0)
-        {
+        if (FG_send_Faile_again == 0) {
             FG_send_Faile_again = 1;
             FG_Second = 0;
             TIME_alarm_AUTO = 350;
             FLAG_HA_Inquiry = 1;
             DATA_Packet_Control_0 = 0x00;
             FLAG_AUTO_SEND_ok = 1;
-        } //2015.1.30×·¼ÓÐÞ¸Ä×Ô¶¯Ä³ID·¢ËÍÒ»´ÎÊ§°Ü£¬×·¼ÓÔÙ·¢ËÍÒ»´Î
-        else if (FG_send_Faile_again == 1)
-        {
+        }//2015.1.30×·¼ÓÐÞ¸Ä×Ô¶¯Ä³ID·¢ËÍÒ»´ÎÊ§°Ü£¬×·¼ÓÔÙ·¢ËÍÒ»´Î
+        else if (FG_send_Faile_again == 1) {
             FG_send_Faile_again = 2;
             FG_Second = 0;
             TIME_alarm_AUTO = 350;
             FLAG_HA_Inquiry = 1;
             DATA_Packet_Control_0 = 0x00;
             FLAG_AUTO_SEND_ok = 1;
-        } //2015.4.2×·¼ÓÐÞ¸Ä×Ô¶¯Ä³ID·¢ËÍÒ»´ÎÊ§°Ü£¬×·¼ÓÔÙ·¢ËÍÁ½´Î
-        else if (FG_send_Faile_again == 2)
-        {
+        }//2015.4.2×·¼ÓÐÞ¸Ä×Ô¶¯Ä³ID·¢ËÍÒ»´ÎÊ§°Ü£¬×·¼ÓÔÙ·¢ËÍÁ½´Î
+        else if (FG_send_Faile_again == 2) {
             time_APP_Start_up = 0;
             FG_Second = 1;
             APP_check_char = 0;
             FG_send_Faile_notice = 1;
         } //2015.3.31×·¼ÓÐÞ¸Ä 2´Î·¢ËÍ¶¼Ê§°Ü£¬SIGÂÌÉ«LED 1HzÍ¨Öª
-        if (UART_DATA_buffer[8] == 0x10)
-        {
+        if (UART_DATA_buffer[8] == 0x10) {
             HA_uart_app[14] = 0xFF;
             HA_uart_app[15] = 0x00;
         }
-    }
-    else if ((DATA_Packet_Control_0 == 0x81) || (DATA_Packet_Control_0 == 0x85))
-    {
+    } else if ((DATA_Packet_Control_0 == 0x81) || (DATA_Packet_Control_0 == 0x85)) {
         HA_uart_app[14] = 01;
         HA_uart_app[15] = SWITCH_DIP;
-    }
-    else if ((DATA_Packet_Control_0 == 0x82) || (DATA_Packet_Control_0 == 0x86))
-    {
+    } else if ((DATA_Packet_Control_0 == 0x82) || (DATA_Packet_Control_0 == 0x86)) {
         HA_uart_app[14] = 02;
         HA_uart_app[15] = SWITCH_DIP;
-    }
-    else if ((DATA_Packet_Control_0 == 0x83) || (DATA_Packet_Control_0 == 0x87))
-    {
+    } else if ((DATA_Packet_Control_0 == 0x83) || (DATA_Packet_Control_0 == 0x87)) {
         HA_uart_app[14] = 03;
         HA_uart_app[15] = SWITCH_DIP;
-    }
-    else if ((DATA_Packet_Control_0 == 0x84) || (DATA_Packet_Control_0 == 0x88))
-    {
+    } else if ((DATA_Packet_Control_0 == 0x84) || (DATA_Packet_Control_0 == 0x88)) {
         HA_uart_app[14] = 04;
         HA_uart_app[15] = SWITCH_DIP;
     }
@@ -1408,41 +1123,31 @@ void HA_uart_send_APP(void)
     SWITCH_DIP_id_data_bak = DATA_Packet_ID;
     //if(DATA_Packet_soft_ver==1){HA_uart_app[15]=SWITCH_DIP|0x10;HA_Cache_SWITCH_DIP_bak=HA_uart_app[15]|0x10;}
     m = 0;
-    for (i = 8; i < 16; i++)
-        m = m + HA_uart_app[i];
+    for (i = 8; i < 16; i++)m = m + HA_uart_app[i];
     HA_uart_app[16] = m % 256;
     HA_uart_app[17] = m / 256;
 
     //if((APP_check_ID!=b0.IDL)||(APP_check_Control!=HA_uart_app[14])||(HA_uart_app[14]==5)||(APP_check_char==0)||(FG_WIFI_SWITCH_DIP==1))    //2014.10.11ÐÞ¸Ä
-    if ((APP_check_ID != b0.IDL) || (APP_check_Control != HA_uart_app[14]) || (APP_check_char == 0) || (FG_WIFI_SWITCH_DIP == 1))
-    {
-        if ((HA_uart_app[14] == 5) && (FG_Second == 0))
-            ;
-        else if (time_APP_Start_up == 0)
-        {                   //2015.04.27ÐÞÕý
+    if ((APP_check_ID != b0.IDL) || (APP_check_Control != HA_uart_app[14]) || (APP_check_char == 0) || (FG_WIFI_SWITCH_DIP == 1)) {
+        if ((HA_uart_app[14] == 5)&&(FG_Second == 0));
+        else if (time_APP_Start_up == 0) { //2015.04.27ÐÞÕý
             Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-            for (i = 0; i < 18; i++)
-            {
+            for (i = 0; i < 18; i++) {
                 U1TXREG = HA_uart_app[i];
-                if (i % 6 == 0)
-                    Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+                if (i % 6 == 0)Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
             }
 
-            if (HA_uart_app[8] == 0x02)
-            {
+            if (HA_uart_app[8] == 0x02) {
                 HA_uart_app[8] = 0x01;
                 m = 0;
-                for (i = 8; i < 16; i++)
-                    m = m + HA_uart_app[i];
+                for (i = 8; i < 16; i++)m = m + HA_uart_app[i];
                 HA_uart_app[16] = m % 256;
                 HA_uart_app[17] = m / 256;
                 //Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
                 Delay100us(30); //>=750,WIFI buffer ok
-                for (i = 0; i < 18; i++)
-                {
+                for (i = 0; i < 18; i++) {
                     U1TXREG = HA_uart_app[i];
-                    if (i % 6 == 0)
-                        Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+                    if (i % 6 == 0)Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
                 }
             }
 
@@ -1458,8 +1163,7 @@ void HA_uart_send_APP(void)
 #endif
 }
 
-void uart_send_APP_allID(void)
-{
+void uart_send_APP_allID(void) {
 #if defined(__Product_PIC32MX2_WIFI__)
     UINT16 i;
     UINT16 d0, d1 = 0;
@@ -1467,10 +1171,8 @@ void uart_send_APP_allID(void)
     UINT8 xc[4] = {0};
     uni_rom_id xk;
     uart_send_APP_Head();
-    for (i = 0; i < ID_DATA_PCS; i++)
-    {
-        if (ID_Receiver_DATA[i] != 0)
-            d1++;
+    for (i = 0; i < ID_DATA_PCS; i++) {
+        if (ID_Receiver_DATA[i] != 0)d1++;
     }
     d0 = d1 * 3 + 3;
     U1TXREG = d0 % 256;
@@ -1481,10 +1183,8 @@ void uart_send_APP_allID(void)
     U1TXREG = 0x00;
     Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
     d0 = 0x04;
-    for (i = 0; i < ID_DATA_PCS; i++)
-    {
-        if (ID_Receiver_DATA[i] != 0)
-        {
+    for (i = 0; i < ID_DATA_PCS; i++) {
+        if (ID_Receiver_DATA[i] != 0) {
             xk.IDL = ID_Receiver_DATA[i];
             xc[0] = xk.IDB[0];
             d0 = d0 + xc[0];
@@ -1496,8 +1196,7 @@ void uart_send_APP_allID(void)
             d0 = d0 + xc[2];
             U1TXREG = xc[2];
             xk.IDB[3] = 0;
-            if (i % 2 == 1)
-                Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+            if (i % 2 == 1)Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
         }
     }
     U1TXREG = d0 % 256;
@@ -1505,8 +1204,7 @@ void uart_send_APP_allID(void)
 #endif
 }
 
-void uart_send_APP_allalarm(void)
-{
+void uart_send_APP_allalarm(void) {
 #if defined(__Product_PIC32MX2_WIFI__)
     UINT16 i, j;
     UINT16 d0, d1;
@@ -1514,7 +1212,7 @@ void uart_send_APP_allalarm(void)
     uni_rom_id num100;
     uart_send_APP_Head();
     d1 = UART1_DATA[11] - 1;
-    d0 = 10 + WIFI_alarm_data[d1][6] * 3;
+    d0 = 10 + WIFI_alarm_data[d1][6]*3;
     U1TXREG = d0 % 256;
     U1TXREG = d0 / 256;
     Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
@@ -1522,77 +1220,74 @@ void uart_send_APP_allalarm(void)
     U1TXREG = 0x01;
     U1TXREG = 0x00;
     d0 = 0x08;
-    for (i = 0; i < 7; i++)
-    {
+    for (i = 0; i < 7; i++) {
         U1TXREG = WIFI_alarm_data[d1][i];
         d0 = d0 + WIFI_alarm_data[d1][i];
-        if (i == 2)
-            Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+        if (i == 2)Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
     }
-    d2 = WIFI_alarm_data[d1][6] * 3;
-    for (i = 0; i < d2; i++)
-    {
+    d2 = WIFI_alarm_data[d1][6]*3;
+    for (i = 0; i < d2; i++) {
         d0 = d0 + WIFI_alarm_data[d1][i + 7];
         U1TXREG = WIFI_alarm_data[d1][i + 7];
-        if (i % 6 == 0)
-            Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+        if (i % 6 == 0)Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
     }
     U1TXREG = d0 % 256;
     U1TXREG = d0 / 256;
 
-//                 d1=UART1_DATA[11]-1;
-//                 for(i=0;i<103;i++){
-//                     WIFI_alarm_data_planning[i]=WIFI_alarm_data[d1][i];
-//                 }
-//                 for(i=0;i<WIFI_alarm_data[d1][6];i++){
-//                     d0=i*3;
-//                     num100.IDB[0]=WIFI_alarm_data[d1][d0+7];
-//                     num100.IDB[1]=WIFI_alarm_data[d1][d0+8];
-//                     num100.IDB[2]=WIFI_alarm_data[d1][d0+9];
-//                     num100.IDB[3]=0;
-//                     for(j=0;j<ID_DATA_PCS;j++){
-//                        if(ID_Receiver_DATA[j]==num100.IDL)j=100;
-//                     }
-//                     if(j!=101){
-//                         for(j=d0+10;j<103;j++)WIFI_alarm_data_planning[j-3]=WIFI_alarm_data_planning[j];
-//                         WIFI_alarm_data_planning[6]--;
-//                     }
-//                     ClearWDT(); // Service the WDT
-//                 }
-//                 uart_send_APP_Head();
-//                 d0=10+WIFI_alarm_data_planning[6]*3;
-//                 U1TXREG=d0%256;
-//                 U1TXREG=d0/256;
-//                 Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-//                 U1TXREG=0x07;
-//                 U1TXREG=0x01;
-//                 U1TXREG=0x00;
-//                 d0=0x08;
-//                 for(i=0;i<7;i++){
-//                     U1TXREG=WIFI_alarm_data_planning[i];
-//                     d0=d0+WIFI_alarm_data_planning[i];
-//                     if(i==2)Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-//                 }
-//                 d2=WIFI_alarm_data_planning[6]*3;
-//                 for(i=0;i<d2;i++){
-//                        d0=d0+WIFI_alarm_data_planning[i+7];
-//                        U1TXREG=WIFI_alarm_data_planning[i+7];
-//                        if(i%6==0)Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-//                }
-//                U1TXREG=d0%256;
-//                U1TXREG=d0/256;
+
+    //                 d1=UART1_DATA[11]-1;
+    //                 for(i=0;i<103;i++){
+    //                     WIFI_alarm_data_planning[i]=WIFI_alarm_data[d1][i];
+    //                 }
+    //                 for(i=0;i<WIFI_alarm_data[d1][6];i++){
+    //                     d0=i*3;
+    //                     num100.IDB[0]=WIFI_alarm_data[d1][d0+7];
+    //                     num100.IDB[1]=WIFI_alarm_data[d1][d0+8];
+    //                     num100.IDB[2]=WIFI_alarm_data[d1][d0+9];
+    //                     num100.IDB[3]=0;
+    //                     for(j=0;j<ID_DATA_PCS;j++){
+    //                        if(ID_Receiver_DATA[j]==num100.IDL)j=100;
+    //                     }
+    //                     if(j!=101){
+    //                         for(j=d0+10;j<103;j++)WIFI_alarm_data_planning[j-3]=WIFI_alarm_data_planning[j];
+    //                         WIFI_alarm_data_planning[6]--;
+    //                     }
+    //                     ClearWDT(); // Service the WDT
+    //                 }
+    //                 uart_send_APP_Head();
+    //                 d0=10+WIFI_alarm_data_planning[6]*3;
+    //                 U1TXREG=d0%256;
+    //                 U1TXREG=d0/256;
+    //                 Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+    //                 U1TXREG=0x07;
+    //                 U1TXREG=0x01;
+    //                 U1TXREG=0x00;
+    //                 d0=0x08;
+    //                 for(i=0;i<7;i++){
+    //                     U1TXREG=WIFI_alarm_data_planning[i];
+    //                     d0=d0+WIFI_alarm_data_planning[i];
+    //                     if(i==2)Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+    //                 }
+    //                 d2=WIFI_alarm_data_planning[6]*3;
+    //                 for(i=0;i<d2;i++){
+    //                        d0=d0+WIFI_alarm_data_planning[i+7];
+    //                        U1TXREG=WIFI_alarm_data_planning[i+7];
+    //                        if(i%6==0)Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+    //                }
+    //                U1TXREG=d0%256;
+    //                U1TXREG=d0/256;
 
 #endif
 }
-void uart_send_APP_SUN(void)
-{
+
+void uart_send_APP_SUN(void) {
 #if defined(__Product_PIC32MX2_WIFI__)
     UINT16 i, j;
     UINT16 d0, d1;
     UINT16 d2 = 0;
     uni_rom_id num100;
     uart_send_APP_Head();
-    d0 = 8 + WIFI_alarm_data[10][6] * 3;
+    d0 = 8 + WIFI_alarm_data[10][6]*3;
     U1TXREG = d0 % 256;
     U1TXREG = d0 / 256;
     Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
@@ -1600,76 +1295,73 @@ void uart_send_APP_SUN(void)
     U1TXREG = 0x01;
     U1TXREG = 0x00;
     d0 = 0x0C + 0x01;
-    for (i = 0; i < 3; i++)
-    {
+    for (i = 0; i < 3; i++) {
         U1TXREG = SUN_ON_OFF_seat[i];
         d0 = d0 + SUN_ON_OFF_seat[i];
     }
     Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-    for (i = 0; i < 2; i++)
-    {
+    for (i = 0; i < 2; i++) {
         U1TXREG = WIFI_alarm_data[10][i + 5];
         d0 = d0 + WIFI_alarm_data[10][i + 5];
     }
-    d2 = WIFI_alarm_data[10][6] * 3;
-    for (i = 0; i < d2; i++)
-    {
+    d2 = WIFI_alarm_data[10][6]*3;
+    for (i = 0; i < d2; i++) {
         d0 = d0 + WIFI_alarm_data[10][i + 7];
         U1TXREG = WIFI_alarm_data[10][i + 7];
-        if (i % 6 == 0)
-            Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+        if (i % 6 == 0)Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
     }
     U1TXREG = d0 % 256;
     U1TXREG = d0 / 256;
 
-//                 for(i=0;i<103;i++){
-//                     WIFI_alarm_data_planning[i]=WIFI_alarm_data[10][i];
-//                 }
-//                 for(i=0;i<WIFI_alarm_data[10][6];i++){
-//                     d0=i*3;
-//                     num100.IDB[0]=WIFI_alarm_data[d1][d0+7];
-//                     num100.IDB[1]=WIFI_alarm_data[d1][d0+8];
-//                     num100.IDB[2]=WIFI_alarm_data[d1][d0+9];
-//                     num100.IDB[3]=0;
-//                     for(j=0;j<ID_DATA_PCS;j++){
-//                        if(ID_Receiver_DATA[j]==num100.IDL)j=100;
-//                     }
-//                     if(j!=101){
-//                         for(j=d0+10;j<103;j++)WIFI_alarm_data_planning[j-3]=WIFI_alarm_data_planning[j];
-//                         WIFI_alarm_data_planning[6]--;
-//                     }
-//                     ClearWDT(); // Service the WDT
-//                 }
-//                 uart_send_APP_Head();
-//                 d0=8+WIFI_alarm_data_planning[6]*3;
-//                 U1TXREG=d0%256;
-//                 U1TXREG=d0/256;
-//                 Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-//                 U1TXREG=0x0C;
-//                 U1TXREG=0x01;
-//                 U1TXREG=0x00;
-//                 d0=0x0C+0x01;
-//                 for(i=0;i<3;i++){
-//                     U1TXREG=SUN_ON_OFF_seat[i];
-//                     d0=d0+SUN_ON_OFF_seat[i];
-//                 }
-//                 Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-//                 for(i=0;i<2;i++){
-//                     U1TXREG=WIFI_alarm_data_planning[i+5];
-//                     d0=d0+WIFI_alarm_data_planning[i+5];
-//                 }
-//                 d2=WIFI_alarm_data_planning[6]*3;
-//                 for(i=0;i<d2;i++){
-//                        d0=d0+WIFI_alarm_data_planning[i+7];
-//                        U1TXREG=WIFI_alarm_data_planning[i+7];
-//                        if(i%6==0)Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-//                }
-//                U1TXREG=d0%256;
-//                U1TXREG=d0/256;
+
+    //                 for(i=0;i<103;i++){
+    //                     WIFI_alarm_data_planning[i]=WIFI_alarm_data[10][i];
+    //                 }
+    //                 for(i=0;i<WIFI_alarm_data[10][6];i++){
+    //                     d0=i*3;
+    //                     num100.IDB[0]=WIFI_alarm_data[d1][d0+7];
+    //                     num100.IDB[1]=WIFI_alarm_data[d1][d0+8];
+    //                     num100.IDB[2]=WIFI_alarm_data[d1][d0+9];
+    //                     num100.IDB[3]=0;
+    //                     for(j=0;j<ID_DATA_PCS;j++){
+    //                        if(ID_Receiver_DATA[j]==num100.IDL)j=100;
+    //                     }
+    //                     if(j!=101){
+    //                         for(j=d0+10;j<103;j++)WIFI_alarm_data_planning[j-3]=WIFI_alarm_data_planning[j];
+    //                         WIFI_alarm_data_planning[6]--;
+    //                     }
+    //                     ClearWDT(); // Service the WDT
+    //                 }
+    //                 uart_send_APP_Head();
+    //                 d0=8+WIFI_alarm_data_planning[6]*3;
+    //                 U1TXREG=d0%256;
+    //                 U1TXREG=d0/256;
+    //                 Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+    //                 U1TXREG=0x0C;
+    //                 U1TXREG=0x01;
+    //                 U1TXREG=0x00;
+    //                 d0=0x0C+0x01;
+    //                 for(i=0;i<3;i++){
+    //                     U1TXREG=SUN_ON_OFF_seat[i];
+    //                     d0=d0+SUN_ON_OFF_seat[i];
+    //                 }
+    //                 Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+    //                 for(i=0;i<2;i++){
+    //                     U1TXREG=WIFI_alarm_data_planning[i+5];
+    //                     d0=d0+WIFI_alarm_data_planning[i+5];
+    //                 }
+    //                 d2=WIFI_alarm_data_planning[6]*3;
+    //                 for(i=0;i<d2;i++){
+    //                        d0=d0+WIFI_alarm_data_planning[i+7];
+    //                        U1TXREG=WIFI_alarm_data_planning[i+7];
+    //                        if(i%6==0)Delay100us(30);//ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+    //                }
+    //                U1TXREG=d0%256;
+    //                U1TXREG=d0/256;    
 #endif
 }
-void uart_send_APP_Emial_time(void)
-{
+
+void uart_send_APP_Emial_time(void) {
 #if defined(__Product_PIC32MX2_WIFI__)
     UINT16 i, j;
     UINT16 d0, d1;
@@ -1683,19 +1375,17 @@ void uart_send_APP_Emial_time(void)
     U1TXREG = 0x01;
     U1TXREG = 0x00;
     d0 = 0x0A + 0x01;
-    for (i = 0; i < 7; i++)
-    {
+    for (i = 0; i < 7; i++) {
         U1TXREG = Emial_time_data[d1][i];
         d0 = d0 + Emial_time_data[d1][i];
-        if (i == 2)
-            Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
+        if (i == 2)Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
     }
     U1TXREG = d0 % 256;
     U1TXREG = d0 / 256;
 #endif
 }
-void uart_send_APP_HA_Change(void)
-{
+
+void uart_send_APP_HA_Change(void) {
 #if defined(__Product_PIC32MX2_WIFI__)
     UINT16 i;
     UINT16 d0;
@@ -1707,8 +1397,7 @@ void uart_send_APP_HA_Change(void)
     U1TXREG = 0x01;
     U1TXREG = 0x00;
     d0 = 0x0F;
-    for (i = 0; i < 3; i++)
-    {
+    for (i = 0; i < 3; i++) {
         U1TXREG = HA_Change_send_email[i];
         d0 = d0 + HA_Change_send_email[i];
     }
@@ -1718,15 +1407,14 @@ void uart_send_APP_HA_Change(void)
 #endif
 }
 
-void uart_send_APP_Head(void)
-{
+void uart_send_APP_Head(void) {
 #if defined(__Product_PIC32MX2_WIFI__)
     UINT8 i;
     Delay100us(50); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
-    for (i = 0; i < 6; i++)
-        U1TXREG = HA_uart_app[i];
+    for (i = 0; i < 6; i++)U1TXREG = HA_uart_app[i];
 #endif
 }
+
 void uart_send_APP_Public(UINT8 Public_X, UINT8 Public_Y) //Public_X ->Ö¸ÁîÀà±ðµÍ×Ö½Ú  Public_Y ->·µ»Ø½á¹û  0£¨OK£© 1£¨NG£©
 {
 #if defined(__Product_PIC32MX2_WIFI__)
@@ -1745,6 +1433,7 @@ void uart_send_APP_Public(UINT8 Public_X, UINT8 Public_Y) //Public_X ->Ö¸ÁîÀà±ðµ
 #endif
 }
 #if defined(__Product_PIC32MX2_WIFI__)
+
 void uart_send_APP_To_and_Tc(UINT8 Public_X, UINT8 Public_Y, UINT8 Public_Z) //Public_X ->·µ»Ø½á¹û  0£¨OK£© 1£¨NG£©  Public_Y ->To/Tc SET/readÖ¸Áî   Public_Z ->To/TcÊý¾Ý
 {
     UINT16 i_x;
@@ -1769,8 +1458,8 @@ void uart_send_APP_To_and_Tc(UINT8 Public_X, UINT8 Public_Y, UINT8 Public_Z) //P
 #endif
 
 #if defined(__32MX250F128D__)
-void APP_OUT_TEST1(unsigned char *time_TEST1)
-{
+
+void APP_OUT_TEST1(unsigned char *time_TEST1) {
     UINT16 i_x0;
     uart_send_APP_Head();
     U1TXREG = 0x06;
@@ -1787,8 +1476,8 @@ void APP_OUT_TEST1(unsigned char *time_TEST1)
     U1TXREG = i_x0 / 256;
     Delay100us(30); //ÑÓÊ±2.1mSÒÔÉÏ£¬»º³åÇøÊÇ8¼¶FIFO
 }
-void APP_OUT_TEST2(unsigned char *time_TEST2)
-{
+
+void APP_OUT_TEST2(unsigned char *time_TEST2) {
     UINT16 i_x0;
     uart_send_APP_Head();
     U1TXREG = 0x04;

@@ -147,9 +147,9 @@ UINT16 Manual_override_TIMER=0;
 UINT8 FG_auto_manual_mode=0;
 UINT8 FG_First_auto=0;
 UINT8 FG_auto_open_time=0;
+#endif
 
-UINT8  UART_DATA_buffer[493]={0};
-#elif defined(__Product_PIC32MX2_WIFI__)
+#if defined(__Product_PIC32MX2_WIFI__)
     //UINT8  UART1_DATA[106]={0};
     //UINT8  UART_DATA_buffer[106]={0};
     UINT8  UART1_DATA[493]={0};
