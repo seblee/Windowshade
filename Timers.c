@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <plib.h>		// 常用C定义
 #include "initial.h"		// 初始化
-
+#include "Uart.h"
 
 void timer2_Init(void)
 {
@@ -55,6 +55,7 @@ void __ISR(_TIMER_2_VECTOR,ipl1)Timer1Handler(void)
     if(TIMER18ms)--TIMER18ms;
     if(TIMER250ms_STOP)--TIMER250ms_STOP;
     if (TIME_10ms)--TIME_10ms;
+    if(U1AckTimer)U1AckTimer--;
     else{                            // 10mS FLAG
 	  TIME_10ms = 10;
 	  FG_10ms = 1;

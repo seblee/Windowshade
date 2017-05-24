@@ -57,8 +57,10 @@ typedef enum {
     ACKingStatues,
     ACKDoneStatues,
 }__U1Statues; 
-
 extern __U1Statues U1Statues;
+extern unsigned int U1AckTimer;
+#define U1AckDelayTime  2
+
 #endif
 void WriteString(const char *string);
 void PutCharacter(const char character);

@@ -19,9 +19,9 @@ UINT8 UartCount = 0;
 UINT8 UART_DATA_buffer[493]={0};
 __Databits_t Databits_t;
 __U1Statues U1Statues;
-UINT8 ACKBack[3] = {
-    0x02,0x03,0x00
-};
+UINT8 ACKBack[3] = {0x02,0x03,0x00};
+unsigned int U1AckTimer = 0;
+
 #endif
 
 void HA_uart_send_APP(void);
@@ -136,7 +136,8 @@ void ReceiveFrame(UINT8 Cache)
         UartCount = 0;
 //        Receiver_LED_OUT_INV = !Receiver_LED_OUT_INV;
         U1Statues = ReceiveDoneStatues;
-        U1Busy_OUT = 0;
+        U1AckTimer = U1AckDelayTime;
+        U1Busy_OUT = 1;
     }
 }
 
@@ -188,9 +189,9 @@ void OprationFrame(void)
 void TranmissionACK(void)
 {
     unsigned char i = 0;
-    if(U1Statues == ReceiveDoneStatues)
+    if((U1Statues == ReceiveDoneStatues)&&(U1AckTimer == 0))
     {
-        U1Busy_OUT = 0;
+        U1Busy_OUT = 1;
         if (UARTTransmitterIsReady(UART1))
         {            
             do{

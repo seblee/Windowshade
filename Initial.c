@@ -504,18 +504,18 @@ void VHF_GPIO_INIT(void){
 
 void RF_test_mode(void )
 {
-  UINT8 uart_data,Boot_i;
+    UINT8 uart_data,Boot_i;
 
 #if defined(__Product_PIC32MX2_Receiver__)
-  Receiver_LED_OUT=FLAG_PORT_LEDoutput_allow;
-  for(Boot_i=0;Boot_i<2;Boot_i++){
-      for(time_3sec=0;time_3sec<1500;time_3sec++){
-         Delayus(240);   //80us
-         ClearWDT(); // Service the WDT
-      }
-      Receiver_LED_OUT=!Receiver_LED_OUT;
-  }
-  Receiver_LED_OUT=FLAG_PORT_LEDoutput_NOallow;
+    Receiver_LED_OUT=FLAG_PORT_LEDoutput_allow;
+    for(Boot_i=0;Boot_i<2;Boot_i++){
+        for(time_3sec=0;time_3sec<1500;time_3sec++){
+            Delayus(240);   //80us
+            ClearWDT(); // Service the WDT
+        }
+        Receiver_LED_OUT=!Receiver_LED_OUT;
+    }
+    Receiver_LED_OUT=FLAG_PORT_LEDoutput_NOallow;
 
 
 
@@ -524,54 +524,54 @@ void RF_test_mode(void )
         if(HA_Sensor_signal==0)Receiver_LED_TX=FLAG_PORT_LEDoutput_allow;
         else Receiver_LED_TX=FLAG_PORT_LEDoutput_NOallow;
 
-	if(HA_ERR_signal==0){
-	  if(HA_L_signal==0)Tx_Rx_mode=0;
-	  else Tx_Rx_mode=1;
-	}
-	else{
-	  if(HA_L_signal==0)Tx_Rx_mode=2;
-	  else Tx_Rx_mode=3;
-	}
-	if((Tx_Rx_mode==0)||(Tx_Rx_mode==1)){
-	  FG_test_rx=0;
-	  Receiver_LED_RX=FLAG_PORT_LEDoutput_NOallow;
-	  FG_test_tx_off=0;
+        if(HA_ERR_signal==0){
+            if(HA_L_signal==0)Tx_Rx_mode=0;
+            else Tx_Rx_mode=1;
+        }
+        else{
+            if(HA_L_signal==0)Tx_Rx_mode=2;
+            else Tx_Rx_mode=3;
+        }
+        if((Tx_Rx_mode==0)||(Tx_Rx_mode==1)){
+            FG_test_rx=0;
+            Receiver_LED_RX=FLAG_PORT_LEDoutput_NOallow;
+            FG_test_tx_off=0;
 	  //if(HA_L_signal==0){    //发载波，无调制信号
-	  if(Tx_Rx_mode==0){
-	    Receiver_LED_OUT=FLAG_PORT_LEDoutput_allow;
-	    FG_test_mode=0;
-	    FG_test_tx_1010=0;
-	    if(FG_test_tx_on==0){FG_test_tx_on=1;ADF7021_DATA_IO = Input;dd_set_TX_mode_carrier();}
-	  }
-	  else {    //发载波，有调制信号
-	    if(TIMER1s==0){
-	      TIMER1s=500;
-	      Receiver_LED_OUT=!Receiver_LED_OUT;
-	    }
-	    FG_test_mode=1;
-	    FG_test_tx_on=0;
-	    if(FG_test_tx_1010==0){FG_test_tx_1010=1;ADF7021_DATA_IO = Output;dd_set_TX_mode_1010pattern();}
-	  }
-	}
+            if(Tx_Rx_mode==0){
+                Receiver_LED_OUT=FLAG_PORT_LEDoutput_allow;
+                FG_test_mode=0;
+                FG_test_tx_1010=0;
+                if(FG_test_tx_on==0){FG_test_tx_on=1;ADF7021_DATA_IO = Input;dd_set_TX_mode_carrier();}
+            }
+            else {    //发载波，有调制信号
+                if(TIMER1s==0){
+                    TIMER1s=500;
+                    Receiver_LED_OUT=!Receiver_LED_OUT;
+                }
+                FG_test_mode=1;
+                FG_test_tx_on=0;
+                if(FG_test_tx_1010==0){FG_test_tx_1010=1;ADF7021_DATA_IO = Output;dd_set_TX_mode_1010pattern();}
+            }
+        }
         //else  {           //test ADF7021 RX
-	if((Tx_Rx_mode==2)||(Tx_Rx_mode==3)){
-	  FG_test_rx=1;
-	  Receiver_LED_OUT=FLAG_PORT_LEDoutput_NOallow;
-	  FG_test_mode=0;
-	  FG_test_tx_on=0;
-	  FG_test_tx_1010=0;
-	  if(FG_test_tx_off==0){FG_test_tx_off=1;dd_set_RX_mode();ADF7021_DATA_IO = Input;}    //dd_set_RX_mode_test()   //2015.3.31修改
-	  //if(HA_L_signal==0){
-	  if(Tx_Rx_mode==2)
-	    if(TIMER1s==0){
-	      TIMER1s=500;
-	      Receiver_LED_RX=!Receiver_LED_RX;
-	    }
-	  if(Tx_Rx_mode==3){
-            if(X_COUNT >= 1200){
-              X_COUNT = 0;
-	      if(X_ERR>=60)Receiver_LED_RX=FLAG_PORT_LEDoutput_NOallow;
-	      else Receiver_LED_RX=FLAG_PORT_LEDoutput_allow;
+        if((Tx_Rx_mode==2)||(Tx_Rx_mode==3)){
+            FG_test_rx=1;
+            Receiver_LED_OUT=FLAG_PORT_LEDoutput_NOallow;
+            FG_test_mode=0;
+            FG_test_tx_on=0;
+            FG_test_tx_1010=0;
+            if(FG_test_tx_off==0){FG_test_tx_off=1;dd_set_RX_mode();ADF7021_DATA_IO = Input;}    //dd_set_RX_mode_test()   //2015.3.31修改
+          //if(HA_L_signal==0){
+            if(Tx_Rx_mode==2)
+            if(TIMER1s==0){
+                TIMER1s=500;
+                Receiver_LED_RX=!Receiver_LED_RX;
+            }
+            if(Tx_Rx_mode==3){
+                if(X_COUNT >= 1200){
+                    X_COUNT = 0;
+                if(X_ERR>=60)Receiver_LED_RX=FLAG_PORT_LEDoutput_NOallow;
+                else Receiver_LED_RX=FLAG_PORT_LEDoutput_allow;
 //              uart_data = (X_ERR/1000) + 48;//48;//（X_ERR/1000) + 48;
 //	      Send_char(uart_data);
 //              X_ERR = X_ERR%1000;
@@ -585,13 +585,11 @@ void RF_test_mode(void )
 //	      Send_char(uart_data);
 //              uart_data = 13;//|字符
 //	      Send_char(uart_data);
-              X_ERR = 0;
+                X_ERR = 0;
+                }
             }
-	  }
-	}
+        }
 //	PC_PRG();	       // PC控制
-
-
     }
 //    UART1_end();
     FG_test_rx=0;
@@ -710,25 +708,25 @@ void RF_test_mode(void )
 //===================Delay100us()延时===============//
 void Delay100us(unsigned int timer)
 {
-unsigned int x;
-unsigned int y;                    //延时T=(timer)100us
- for(x=0;x<timer;x++)
-  {
+    unsigned int x;
+    unsigned int y;                    //延时T=(timer)100us
+    for(x=0;x<timer;x++)
+    {
 #if defined(__Product_PIC32MX2_Receiver__)
-     for(y=0;y<=200;y++);   //特别说明：该行采用XC32的0级优化，即无优化
+        for(y=0;y<=200;y++);   //特别说明：该行采用XC32的0级优化，即无优化
      //for(y=0;y<=600;y++);   //特别说明：该行采用XC32的1级优化，C编译器优化后延时函数的延时时间被改变了，请注意。
 #endif
 #if defined(__Product_PIC32MX2_WIFI__)
      for(y=0;y<=400;y++);   //特别说明：该行采用XC32的0级优化，即无优化    时间=timer*0.9ms
      //for(y=0;y<=1800;y++);    //特别说明：该行采用XC32的1级优化，C编译器优化后延时函数的延时时间被改变了，请注意。    时间=timer*0.9ms
 #endif
-   }
+    }
 }
 void Delayus(UINT16 timer)
 {
-  UINT16 x;            //延时T=(timer)us     //SYSCLK=20M
+    UINT16 x;            //延时T=(timer)us     //SYSCLK=20M
 #if defined(__Product_PIC32MX2_Receiver__)
-     for(x=0;x<2*timer;x++);  //特别说明：该行采用XC32的0级优化，即无优化
+        for(x=0;x<2*timer;x++);  //特别说明：该行采用XC32的0级优化，即无优化
    //for(x=0;x<10*timer;x++);  //特别说明：该行采用XC32的1级优化，C编译器优化后延时函数的延时时间被改变了，请注意。
 #endif
 #if defined(__Product_PIC32MX2_WIFI__)
