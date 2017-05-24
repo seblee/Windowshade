@@ -26,6 +26,9 @@
     #define		PIC32MX2_Receiver_mode   0              //模式选择  0=RX      1=TX and RX
 #endif
 
+
+#define Input 1
+#define Output 0
     //============================================
     #define	UINT8		unsigned char
     #define	INT8		char
@@ -39,7 +42,6 @@
   typedef union{
     UINT32  whole_reg;
     UINT8   byte[4];    // Warning: Be endian-specific when accessing bytes
-
    } ADF70XX_REG_T;
 
   typedef union {												// ID No.
@@ -432,7 +434,8 @@ extern void RF_test_mode(void );
     #define  HA_Sensor_signal_IO   TRISAbits.TRISA10 // Input   HA 传感器信号  高电平有效
     #define  Receiver_Login_IO     TRISCbits.TRISC7 // Input   受信机登录键   低电平有效
     #define  Receiver_Buzzer_IO    TRISBbits.TRISB13 // Output   受信机蜂鸣器  高电平有效
-    #define  Receiver_LED_OUT_IO   TRISCbits.TRISC6 // Output   受信机继电器动作输出  低电平有效
+//    #define  Receiver_LED_OUT_IO   TRISCbits.TRISC6 // Output   受信机继电器动作输出  低电平有效    
+    #define  Receiver_LED_OUT_IO   TRISBbits.TRISB5 // Output   受信机继电器动作输出  低电平有效
     #define  Receiver_LED_TX_IO    TRISCbits.TRISC9 // Output   受信机送信指示  低电平有效
     #define  Receiver_LED_RX_IO    TRISCbits.TRISC8 // Output   受信机受信指示  低电平有效
 //    #define  Receiver_LED_TX_IO    TRISCbits.TRISC8 // Output   受信机送信指示  低电平有效
@@ -444,7 +447,7 @@ extern void RF_test_mode(void );
 
     #define  Receiver_test_IO    TRISBbits.TRISB10  // INPUT 受信机测试脚  高电平有效
     #define  DIP_switch1_IO         TRISBbits.TRISB11 // Input   DIP_switch1  低电平有效
-    #define  DIP_switch2_IO         TRISBbits.TRISB5 // Input   DIP_switch2  低电平有效
+//    #define  DIP_switch2_IO         TRISBbits.TRISB5 // Input   DIP_switch2  低电平有效
     #define  DIP_switch3_IO         TRISAbits.TRISA0 // Input   DIP_switch3  低电平有效
 #endif
 #if defined(__Product_PIC32MX2_WIFI__)
@@ -519,7 +522,7 @@ extern void RF_test_mode(void );
     #define  HA_Sensor_signal   PORTAbits.RA10   // Input   HA 传感器信号  高电平有效
     #define  Receiver_Login     PORTCbits.RC7   // Input   受信机登录键   低电平有效
     #define  Receiver_Buzzer    LATBbits.LATB13  // Output   受信机蜂鸣器  高电平有效
-    #define  Receiver_LED_OUT   LATCbits.LATC6  // Output   受信机继电器动作输出  低电平有效
+    #define  Receiver_LED_OUT   LATBbits.LATB5  // Output   受信机继电器动作输出  低电平有效
     #define  Receiver_LED_TX    LATCbits.LATC9 // Output   受信机送信指示  低电平有效
     #define  Receiver_LED_RX    LATCbits.LATC8  // Output   受信机受信指示  低电平有效
 //    #define  Receiver_LED_TX    LATCbits.LATC8 // Output   受信机送信指示  低电平有效
@@ -531,7 +534,7 @@ extern void RF_test_mode(void );
 
     #define  Receiver_test    PORTBbits.RB10   // Input 受信机测试脚  高电平有效
     #define  DIP_switch1         PORTBbits.RB11 // Input   DIP_switch1  低电平有效
-    #define  DIP_switch2         PORTBbits.RB5 // Input   DIP_switch2  低电平有效
+//    #define  DIP_switch2         PORTBbits.RB5 // Input   DIP_switch2  低电平有效
     #define  DIP_switch3         PORTAbits.RA0 // Input   DIP_switch3  低电平有效
 //特别注意，在追加I/O时，用到PA口，请不要用LATAbits寄存器，请使用LATACLR，LATASET。
 #endif

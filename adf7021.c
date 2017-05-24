@@ -813,8 +813,8 @@ void DIP_switch_Get(void)
 #if defined(__Product_PIC32MX2_Receiver__)
        if(DIP_switch1==1)DIP_switch_data=DIP_switch_data&0xBF;
           else DIP_switch_data=DIP_switch_data|0x40;
-       if(DIP_switch2==1)DIP_switch_data=DIP_switch_data&0xDF;
-          else DIP_switch_data=DIP_switch_data|0x20;
+//       if(DIP_switch2==1)DIP_switch_data=DIP_switch_data&0xDF;
+//          else DIP_switch_data=DIP_switch_data|0x20;
        if(DIP_switch3==1)DIP_switch_data=DIP_switch_data&0xEF;
           else DIP_switch_data=DIP_switch_data|0x10;
        if((DIP_switch_data!=DIP_switch_data_bak)&&(FLAG_DIP_switch==0)){FLAG_DIP_switch=1;TIME_DIP_switch=3;}

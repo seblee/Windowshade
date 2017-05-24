@@ -90,8 +90,8 @@ Note: make sure the boot loader and your application, both use the same fuse set
 #pragma config OSCIOFNC = OFF      // CLKO Enable: Disabled
 #pragma config IESO     = OFF      // Internal/External Switch-over: Disabled
 #pragma config FSOSCEN  = OFF      // Secondary Oscillator Enable: Disabled
-#pragma config FVBUSONIO = OFF       // USB VBUS ON Selection (Controlled by USB Module)
-#pragma config FUSBIDIO = OFF        // USB USID Selection (Controlled by the USB Module)
+#pragma config FUSBIDIO = OFF      // USB USID Selection (Controlled by Port Function)
+#pragma config FVBUSONIO = OFF     // USB VBUS ON Selection (Controlled by Port Function)
 
 #if defined(TRANSPORT_LAYER_ETH)
 #pragma config FMIIEN = OFF, FETHIO = OFF	// external PHY in RMII/alternate configuration
@@ -177,6 +177,7 @@ main_start:
             Freq_Scanning();
         } else if (TIMER1s == 0)goto main_start;
         ID_learn();
+        TranmissionACK();
     }
     return 0;
 }
@@ -185,9 +186,9 @@ main_start:
 // Core Timer Interrupts
 //
 
-    void __ISR(_CORE_TIMER_VECTOR, ipl2) CoreTimerHandler(void) {
-        // clear the interrupt flag
-        mCTClearIntFlag();
-        // update the period
-        UpdateCoreTimer(CORE_TICK_RATE);
-    }
+void __ISR(_CORE_TIMER_VECTOR, ipl2) CoreTimerHandler(void) {
+    // clear the interrupt flag
+    mCTClearIntFlag();
+    // update the period
+    UpdateCoreTimer(CORE_TICK_RATE);
+}

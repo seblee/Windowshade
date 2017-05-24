@@ -412,91 +412,91 @@ void VHF_GPIO_INIT(void){
     
 
     #if defined(__Product_PIC32MX2_Receiver__)
-       ADF7021_SCLK_IO = 0;
+       ADF7021_SCLK_IO = Output;
        ADF7021_SCLK=0;
-       ADF7021_SDATA_IO = 0;
+       ADF7021_SDATA_IO = Output;
        ADF7021_SDATA=0;
-       ADF7021_SLE_IO = 0;
+       ADF7021_SLE_IO = Output;
        ADF7021_SLE=0;
-       ADF7021_SREAD_IO = 1;
-       ADF7021_CE_IO = 0;
+       ADF7021_SREAD_IO = Input;
+       ADF7021_CE_IO = Output;
        ADF7021_CE=0;
-       ADF7021_MUXOUT_IO = 1;
-       ADF7021_DATA_CLK_IO = 1;
-       ADF7021_DATA_IO = 1;
-       ADF7021_CLKOUT_IO=1;     // Input
-       ADF7021_INT_LOCK_IO=1;   // Input
+       ADF7021_MUXOUT_IO = Input;
+       ADF7021_DATA_CLK_IO = Input;
+       ADF7021_DATA_IO = Input;
+       ADF7021_CLKOUT_IO = Input;     // Input
+       ADF7021_INT_LOCK_IO = Input;   // Input
        SDAIO=0; // Input AND output
        SCLIO=0; // output
 
-      HA_L_signal_IO=1; // Input   HA 下限信号   高电平有效
-      HA_ERR_signal_IO=1;// Input   HA 异常信号  高电平有效
-      HA_Sensor_signal_IO=1;// Input   HA 传感器信号  高电平有效
-      Receiver_Login_IO=1;// Input   受信机登录键   低电平有效
-      Receiver_Buzzer_IO=0;// Output   受信机蜂鸣器  高电平有效
+      HA_L_signal_IO = Input; // Input   HA 下限信号   高电平有效
+      HA_ERR_signal_IO = Input;// Input   HA 异常信号  高电平有效
+      HA_Sensor_signal_IO = Input;// Input   HA 传感器信号  高电平有效
+      Receiver_Login_IO = Input;// Input   受信机登录键   低电平有效
+      Receiver_Buzzer_IO = Output;// Output   受信机蜂鸣器  高电平有效
       Receiver_Buzzer=0;
       
       FLAG_PORT_LEDoutput_allow=0;      //低电平有效
       FLAG_PORT_LEDoutput_NOallow=1;
-      Receiver_LED_OUT_IO=0;// Output   受信机继电器动作输出 
+      Receiver_LED_OUT_IO = Output;// Output   受信机继电器动作输出 
       Receiver_LED_OUT=FLAG_PORT_LEDoutput_allow;
-      Receiver_LED_TX_IO=0;// Output   受信机送信指示  
+      Receiver_LED_TX_IO = Output;// Output   受信机送信指示  
       Receiver_LED_TX=FLAG_PORT_LEDoutput_NOallow;
-      Receiver_LED_RX_IO=0;// Output   受信机受信指示  
+      Receiver_LED_RX_IO = Output;// Output   受信机受信指示  
       Receiver_LED_RX=FLAG_PORT_LEDoutput_NOallow;
       
-      Receiver_OUT_OPEN_IO=0;  // Output   受信机继电器OPEN  高电平有效
+      Receiver_OUT_OPEN_IO = Output;  // Output   受信机继电器OPEN  高电平有效
       Receiver_OUT_OPEN=0;
-      Receiver_OUT_CLOSE_IO=0;  // Output   受信机继电器CLOSE  高电平有效
+      Receiver_OUT_CLOSE_IO = Output;  // Output   受信机继电器CLOSE  高电平有效
       Receiver_OUT_CLOSE=0;
-      Receiver_OUT_STOP_IO=0;  // Output   受信机继电器STOP  高电平有效
+      Receiver_OUT_STOP_IO = Output;  // Output   受信机继电器STOP  高电平有效
       Receiver_OUT_STOP=0;
-      Receiver_OUT_VENT_IO=0;
+      Receiver_OUT_VENT_IO = Output;
       Receiver_OUT_VENT=0;
 
-      Receiver_test_IO=1;
-      DIP_switch1_IO=1;
-      DIP_switch2_IO=1;
-      DIP_switch3_IO=1;
+      Receiver_test_IO = Input;
+      DIP_switch1_IO = Input;
+//      DIP_switch2_IO = Input;
+      DIP_switch3_IO = Input;
     #endif
 
    #if defined(__Product_PIC32MX2_WIFI__)
-       ADF7021_SCLK_IO = 0;
+       ADF7021_SCLK_IO = Output;
        ADF7021_SCLK=0;
-       ADF7021_SDATA_IO = 0;
+       ADF7021_SDATA_IO = Output;
        ADF7021_SDATA=0;
-       ADF7021_SLE_IO = 0;
+       ADF7021_SLE_IO = Output;
        ADF7021_SLE=0;
-       ADF7021_SREAD_IO = 1;
-       ADF7021_CE_IO = 0;
+       ADF7021_SREAD_IO = Input;
+       ADF7021_CE_IO = Output;
        ADF7021_CE=0;
-       ADF7021_MUXOUT_IO = 1;
-       ADF7021_DATA_CLK_IO = 1;
-       ADF7021_DATA_IO = 1;
-       //ADF7021_CLKOUT_IO=1;     // Input
-       WIFI_test_IO=1;
+       ADF7021_MUXOUT_IO = Input;
+       ADF7021_DATA_CLK_IO = Input;
+       ADF7021_DATA_IO = Input;
+       //ADF7021_CLKOUT_IO = Input;     // Input
+       WIFI_test_IO = Input;
        CNPUBbits.CNPUB4=1;
-       ADF7021_INT_LOCK_IO=1;   // Input
+       ADF7021_INT_LOCK_IO = Input;   // Input
        SDAIO=0; // Input AND output
        SCLIO=0; // output
 
-       PCF8563_INT_IO=1;// Input    追加定时OPEN CLOSE
+       PCF8563_INT_IO = Input;// Input    追加定时OPEN CLOSE
        CNPUCbits.CNPUC0=1;
        //CNPDCbits.CNPDC0=0;
        
-     WIFI_L_Login_IO=1;// Input   wifi集中通讯机登录键   低电平有效
-     WIFI_USBLogin_IO=1;// Input   wifi集中通讯机USB升级键   低电平有效                                                 //测试，测试完后需要删除
-     WIFI_USBOC_IO=1;//Input   wifi集中USB保护监测   低电平有效
-     WIFI_LED_RX_IO=0;//output   wifi集中通讯机受信指示 低电平有效
+     WIFI_L_Login_IO = Input;// Input   wifi集中通讯机登录键   低电平有效
+     WIFI_USBLogin_IO = Input;// Input   wifi集中通讯机USB升级键   低电平有效                                                 //测试，测试完后需要删除
+     WIFI_USBOC_IO = Input;//Input   wifi集中USB保护监测   低电平有效
+     WIFI_LED_RX_IO = Output;//output   wifi集中通讯机受信指示 低电平有效
      WIFI_LED_RX=0;
-     WIFI_LED_TX_IO=0;// output   wifi集中通讯机送信指示 低电平有效
+     WIFI_LED_TX_IO = Output;// output   wifi集中通讯机送信指示 低电平有效
      WIFI_LED_TX=0;
 
-     WIFI_LAN_SELECT_IO=1;  // Input   有线LAN、WIFI切换
-     WIFI_POWER_IO=0;   // output  WIFI电源  低电平有效
+     WIFI_LAN_SELECT_IO = Input;  // Input   有线LAN、WIFI切换
+     WIFI_POWER_IO = Output;   // output  WIFI电源  低电平有效
      //WIFI_POWER=1;
      LATASET=0x0400;
-     LAN_POWER_IO=0;// output  LAN电源  低电平有效
+     LAN_POWER_IO = Output;// output  LAN电源  低电平有效
      LAN_POWER=1;
    #endif
 
@@ -541,7 +541,7 @@ void RF_test_mode(void )
 	    Receiver_LED_OUT=FLAG_PORT_LEDoutput_allow;
 	    FG_test_mode=0;
 	    FG_test_tx_1010=0;
-	    if(FG_test_tx_on==0){FG_test_tx_on=1;ADF7021_DATA_IO=1;dd_set_TX_mode_carrier();}
+	    if(FG_test_tx_on==0){FG_test_tx_on=1;ADF7021_DATA_IO = Input;dd_set_TX_mode_carrier();}
 	  }
 	  else {    //发载波，有调制信号
 	    if(TIMER1s==0){
@@ -550,7 +550,7 @@ void RF_test_mode(void )
 	    }
 	    FG_test_mode=1;
 	    FG_test_tx_on=0;
-	    if(FG_test_tx_1010==0){FG_test_tx_1010=1;ADF7021_DATA_IO=0;dd_set_TX_mode_1010pattern();}
+	    if(FG_test_tx_1010==0){FG_test_tx_1010=1;ADF7021_DATA_IO = Output;dd_set_TX_mode_1010pattern();}
 	  }
 	}
         //else  {           //test ADF7021 RX
@@ -560,7 +560,7 @@ void RF_test_mode(void )
 	  FG_test_mode=0;
 	  FG_test_tx_on=0;
 	  FG_test_tx_1010=0;
-	  if(FG_test_tx_off==0){FG_test_tx_off=1;dd_set_RX_mode();ADF7021_DATA_IO=1;}    //dd_set_RX_mode_test()   //2015.3.31修改
+	  if(FG_test_tx_off==0){FG_test_tx_off=1;dd_set_RX_mode();ADF7021_DATA_IO = Input;}    //dd_set_RX_mode_test()   //2015.3.31修改
 	  //if(HA_L_signal==0){
 	  if(Tx_Rx_mode==2)
 	    if(TIMER1s==0){
@@ -638,7 +638,7 @@ void RF_test_mode(void )
 	    WIFI_LED_TX=1;
 	    FG_test_mode=0;
 	    FG_test_tx_1010=0;
-	    if(FG_test_tx_on==0){FG_test_tx_on=1;ADF7021_DATA_IO=1;dd_set_TX_mode_carrier();}
+	    if(FG_test_tx_on==0){FG_test_tx_on=1;ADF7021_DATA_IO = Input;dd_set_TX_mode_carrier();}
 	  }
 	  else {    //发载波，有调制信号
 	    if(TIMER1s==0){
@@ -647,7 +647,7 @@ void RF_test_mode(void )
 	    }
 	    FG_test_mode=1;
 	    FG_test_tx_on=0;
-	    if(FG_test_tx_1010==0){FG_test_tx_1010=1;ADF7021_DATA_IO=0;dd_set_TX_mode_1010pattern();}
+	    if(FG_test_tx_1010==0){FG_test_tx_1010=1;ADF7021_DATA_IO = Output;dd_set_TX_mode_1010pattern();}
 	  }
 	}
         //else  {           //test ADF7021 RX
@@ -657,7 +657,7 @@ void RF_test_mode(void )
 	  FG_test_mode=0;
 	  FG_test_tx_on=0;
 	  FG_test_tx_1010=0;
-	  if(FG_test_tx_off==0){FG_test_tx_off=1;dd_set_RX_mode();ADF7021_DATA_IO=1;}    //dd_set_RX_mode_test()    //2015.3.31修改
+	  if(FG_test_tx_off==0){FG_test_tx_off=1;dd_set_RX_mode();ADF7021_DATA_IO = Input;}    //dd_set_RX_mode_test()    //2015.3.31修改
 	  //if(HA_L_signal==0){
 	  if(Tx_Rx_mode==2)
 	    if(TIMER1s==0){

@@ -616,8 +616,8 @@ void ID_Decode_OUT(void)
                ID_data.IDL=DATA_Packet_ID;
                    if(DIP_switch1==1)HA_Status_buf=HA_Status_buf&0xBF;
                       else HA_Status_buf=HA_Status_buf|0x40;
-                   if(DIP_switch2==1)HA_Status_buf=HA_Status_buf&0xDF;
-                      else HA_Status_buf=HA_Status_buf|0x20;
+//                   if(DIP_switch2==1)HA_Status_buf=HA_Status_buf&0xDF;
+//                      else HA_Status_buf=HA_Status_buf|0x20;
                    if(DIP_switch3==1)HA_Status_buf=HA_Status_buf&0xEF;
                       else HA_Status_buf=HA_Status_buf|0x10;
                    Control_code=HA_Status_buf;
