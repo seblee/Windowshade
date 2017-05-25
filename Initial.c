@@ -521,8 +521,8 @@ void RF_test_mode(void )
 
     while(Receiver_test==0){
         ClearWDT(); // Service the WDT
-        if(HA_Sensor_signal==0)Receiver_LED_TX=FLAG_PORT_LEDoutput_allow;
-        else Receiver_LED_TX=FLAG_PORT_LEDoutput_NOallow;
+        if(HA_Sensor_signal==0)Receiver_LED_OUT=FLAG_PORT_LEDoutput_allow;
+        else Receiver_LED_OUT=FLAG_PORT_LEDoutput_NOallow;
 
         if(HA_ERR_signal==0){
             if(HA_L_signal==0)Tx_Rx_mode=0;
@@ -538,7 +538,7 @@ void RF_test_mode(void )
             FG_test_tx_off=0;
 	  //if(HA_L_signal==0){    //发载波，无调制信号
             if(Tx_Rx_mode==0){
-                Receiver_LED_OUT=FLAG_PORT_LEDoutput_allow;
+                Receiver_LED_TX = FLAG_PORT_LEDoutput_allow;
                 FG_test_mode=0;
                 FG_test_tx_1010=0;
                 if(FG_test_tx_on==0){FG_test_tx_on=1;ADF7021_DATA_IO = Input;dd_set_TX_mode_carrier();}
@@ -546,7 +546,7 @@ void RF_test_mode(void )
             else {    //发载波，有调制信号
                 if(TIMER1s==0){
                     TIMER1s=500;
-                    Receiver_LED_OUT=!Receiver_LED_OUT;
+                    Receiver_LED_TX=!Receiver_LED_TX;
                 }
                 FG_test_mode=1;
                 FG_test_tx_on=0;
@@ -556,7 +556,7 @@ void RF_test_mode(void )
         //else  {           //test ADF7021 RX
         if((Tx_Rx_mode==2)||(Tx_Rx_mode==3)){
             FG_test_rx=1;
-            Receiver_LED_OUT=FLAG_PORT_LEDoutput_NOallow;
+            Receiver_LED_TX=FLAG_PORT_LEDoutput_NOallow;
             FG_test_mode=0;
             FG_test_tx_on=0;
             FG_test_tx_1010=0;

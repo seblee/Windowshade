@@ -127,13 +127,14 @@ void ID_learn(void)
              TIME_Login_EXIT_rest=5380;    //2015.3.23修改
              TIME_Login_EXIT_Button=500;   //2015.3.23修改
          }
-         if((FLAG_ID_Erase_Login==1)||(FLAG_ID_Login==1)){
-             TIME_Receiver_Login_led++;
-             if(TIME_Receiver_Login_led>=45){              //2015.3.23修改
-                 TIME_Receiver_Login_led=0;
-		 if(TIME_Receiver_LED_OUT>0)Receiver_LED_OUT=FLAG_PORT_LEDoutput_allow;   //2015.3.23修改
-                 else Receiver_LED_OUT=!Receiver_LED_OUT;
-             }
+         if((FLAG_ID_Erase_Login==1)||(FLAG_ID_Login==1)){          
+            TIME_Receiver_Login_led++;
+            if(TIME_Receiver_Login_led >= 45){              //2015.3.23修改
+                TIME_Receiver_Login_led=0;
+                if(TIME_Receiver_LED_OUT>0)
+                    Receiver_LED_OUT=FLAG_PORT_LEDoutput_allow;   //2015.3.23修改
+                else Receiver_LED_OUT=!Receiver_LED_OUT;
+            }
              if((FLAG_ID_Login_OK==1)&&(FLAG_ID_Login_OK_bank==0)){
                  //FLAG_ID_Login_OK_bank=1;             //追加多次ID登录
                  FLAG_ID_Login_OK=0;                   //追加多次ID登录
@@ -487,13 +488,19 @@ void ID_EEPROM_Initial(void)
 void eeprom_IDcheck(void)
 {
     UINT16 i;
-   for(i=0;i<ID_DATA_PCS;i++){
-       if(ID_Receiver_DATA[i]==DATA_Packet_ID_buf){INquiry=i;i=ID_DATA_PCS;FLAG_IDCheck_OK=1;
-             DATA_Packet_ID=DATA_Packet_ID_buf;
-             DATA_Packet_Control=DATA_Packet_Control_buf;
-       }
-       if((FLAG_ID_Erase_Login==1)&&(FLAG_ID_Erase_Login_PCS==1)){i=ID_DATA_PCS;FLAG_IDCheck_OK=0;}         //追加多次ID登录
-   }
+    for(i = 0;i < ID_DATA_PCS;i++){
+        if(ID_Receiver_DATA[i] == DATA_Packet_ID_buf){
+            INquiry = i;
+            i = ID_DATA_PCS;
+            FLAG_IDCheck_OK = 1;
+            DATA_Packet_ID = DATA_Packet_ID_buf;
+            DATA_Packet_Control = DATA_Packet_Control_buf;
+        }
+        if((FLAG_ID_Erase_Login == 1) && (FLAG_ID_Erase_Login_PCS == 1)){
+            i = ID_DATA_PCS;
+            FLAG_IDCheck_OK = 0;
+        }         //追加多次ID登录
+    }
 }
 
 #if defined(__Product_PIC32MX2_WIFI__)

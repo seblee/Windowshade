@@ -147,11 +147,6 @@ main_start:
     EnableWDT(); // Enable the WDT
     //unsigned int pb_clock;
     SYSTEMConfig(SYS_FREQ, SYS_CFG_WAIT_STATES | SYS_CFG_PCACHE);
-
-    //    OpenCoreTimer(CORE_TICK_RATE);
-    //
-    //    mConfigIntCoreTimer((CT_INT_ON | CT_INT_PRIOR_2 | CT_INT_SUB_PRIOR_0));
-
     VHF_GPIO_INIT();
     //ID_Decode_Initial_CNx();
     ID_Decode_Initial_INT();
@@ -166,7 +161,6 @@ main_start:
     FLAG_HA_ERR_signal = 1;
     RF_test_mode();
     TIME_EMC = 10;
-    //    UARTSendDataByte(UART1, 0xa5);
     while (1) {
         all_Erase_EEPROM_next();
         if (FLAG_all_Erase_OK == 0) //EEPROM所有数据擦出时，以下CODE不执行
