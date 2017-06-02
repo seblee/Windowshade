@@ -16,10 +16,10 @@
 UINT8 UartStatus = 0;
 UINT8 UartLen = 0;
 UINT8 UartCount = 0;
-UINT8 UART_DATA_buffer[493]={0};
+UINT8 UART_DATA_buffer[493] = {0};
 __Databits_t Databits_t;
 __U1Statues U1Statues;
-UINT8 ACKBack[3] = {0x02,0x03,0x00};
+UINT8 ACKBack[3] = {0x02, 0x03, 0x00};
 unsigned int U1AckTimer = 0;
 
 #endif
@@ -56,7 +56,7 @@ void Uart1_Init(void)
     CFGCONbits.IOLOCK = 1;
     U1BRG = BaudRate; //Set Baud rate
     U1STA = 0;
-    U1MODEbits.ON = 1; //Enable UART for 8-bit data
+    U1MODEbits.ON = 1;  //Enable UART for 8-bit data
     U1MODEbits.UEN = 0; //
     U1MODEbits.RXINV = 0;
     U1MODEbits.LPBACK = 0;
@@ -71,8 +71,7 @@ void Uart1_Init(void)
     IFS1bits.U1RXIF = 0; // Clear the timer interrupt status flag
     IEC1bits.U1RXIE = 1; // Enable timer interrupts
 #endif
-   
-   
+
 #if defined(__Product_PIC32MX2_WIFI__)
     RPA0R = 1; //Set RPA0-->U1TX
     U1RXR = 4; //Set U1RX-->RPB2
@@ -106,35 +105,40 @@ void ReceiveFrame(UINT8 Cache)
 {
     switch (UartStatus)
     {
-        case FrameHeadSataus:
+    case FrameHeadSataus:
+    {
+        UART_DATA_buffer[0] = UART_DATA_buffer[1];
+        UART_DATA_buffer[1] = UART_DATA_buffer[2];
+        UART_DATA_buffer[2] = Cache;
+        if ((UART_DATA_buffer[0] == FrameHead) &&
+            (UART_DATA_buffer[2] == FrameSingnalID))
         {
-            UART_DATA_buffer[0] = UART_DATA_buffer[1];               
-            UART_DATA_buffer[1] = UART_DATA_buffer[2];
-            UART_DATA_buffer[2]      = Cache;
-            if((UART_DATA_buffer[0] == FrameHead) && \
-               (UART_DATA_buffer[2] == FrameSingnalID))
-            {
-                U1Statues = ReceivingStatues;
-                UartStatus++;
-                UartLen = UART_DATA_buffer[1];
-            }
-        }break;
-        case DataStatus:
-        {
-            UART_DATA_buffer[UartCount + 3] = Cache;
-            UartCount++;
-            if (UartCount >= (UartLen - 3))
-                UartStatus++;
-        }break;
-        default:UartStatus = 0;U1Statues = IdelStatues;break;
+            U1Statues = ReceivingStatues;
+            UartStatus++;
+            UartLen = UART_DATA_buffer[1];
+        }
     }
-    if (UartStatus == 0x02/*FrameEndStatus*/) //接收完一帧处理数据
+    break;
+    case DataStatus:
+    {
+        UART_DATA_buffer[UartCount + 3] = Cache;
+        UartCount++;
+        if (UartCount >= (UartLen - 3))
+            UartStatus++;
+    }
+    break;
+    default:
+        UartStatus = 0;
+        U1Statues = IdelStatues;
+        break;
+    }
+    if (UartStatus == 0x02 /*FrameEndStatus*/) //接收完一帧处理数据
     {
         //add Opration function
         OprationFrame();
         UartStatus = 0;
         UartCount = 0;
-//        Receiver_LED_OUT_INV = !Receiver_LED_OUT_INV;
+        //        Receiver_LED_OUT_INV = !Receiver_LED_OUT_INV;
         U1Statues = ReceiveDoneStatues;
         U1AckTimer = U1AckDelayTime;
         U1Busy_OUT = 1;
@@ -144,97 +148,134 @@ void ReceiveFrame(UINT8 Cache)
 void OprationFrame(void)
 {
     unsigned char i;
-    for(i = 0;i < 4;i++)
+    for (i = 0; i < 4; i++)
         Databits_t.Data[i] = UART_DATA_buffer[3 + i];
-    if(Databits_t.ID_No == 0x92){
+    if (Databits_t.ID_No == 0x92)
+    {
         ACKBack[2] = 0;
-        switch(Databits_t.Mode)
+        switch (Databits_t.Mode)
         {
-            case 0:break;
-            case 4:break;
-            case 5:break;
-            case 6:break;
-            case 7:break;
-            case 8:break;
-            default:ACKBack[2] = 1;return;break;
-        }    
-        switch(Databits_t.Statues)
-        {
-            case 0:break;
-            case 1:break;
-            case 2:break;
-            case 3:break;
-            case 4:break;
-            case 5:break;
-            case 6:break;
-            default:ACKBack[2] = 1;return;break;
+        case 0:
+            break;
+        case 4:
+            break;
+        case 5:
+            break;
+        case 6:
+            break;
+        case 7:
+            break;
+        case 8:
+            break;
+        default:
+            ACKBack[2] = 1;
+            return;
+            break;
         }
-        switch(Databits_t.Abnormal)
+        switch (Databits_t.Statues)
         {
-            case 0x00:break;
-            case 0x04:break;
-            case 0x06:break;
-            case 0x45:break;
-            case 0x46:break;
-            case 0x47:break;
-            case 0x48:break;
-            default:ACKBack[2] = 1;return;break;
-        }   
-    }else{
+        case 0:
+            break;
+        case 1:
+            break;
+        case 2:
+            break;
+        case 3:
+            break;
+        case 4:
+            break;
+        case 5:
+            break;
+        case 6:
+            break;
+        default:
+            ACKBack[2] = 1;
+            return;
+            break;
+        }
+        switch (Databits_t.Abnormal)
+        {
+        case 0x00:
+            break;
+        case 0x04:
+            break;
+        case 0x06:
+            break;
+        case 0x45:
+            break;
+        case 0x46:
+            break;
+        case 0x47:
+            break;
+        case 0x48:
+            break;
+        default:
+            ACKBack[2] = 1;
+            return;
+            break;
+        }
+    }
+    else
+    {
         ACKBack[2] = 1;
         return;
     }
-   
 }
 void TranmissionACK(void)
 {
     unsigned char i = 0;
-    if((U1Statues == ReceiveDoneStatues)&&(U1AckTimer == 0))
+    if ((U1Statues == ReceiveDoneStatues) && (U1AckTimer == 0))
     {
         U1Busy_OUT = 1;
         if (UARTTransmitterIsReady(UART1))
-        {            
-            do{
-                while (!UARTTransmitterIsReady(UART1));
+        {
+            do
+            {
+                while (!UARTTransmitterIsReady(UART1))
+                    ;
                 UARTSendDataByte(UART1, ACKBack[i]);
                 i++;
-            }while(i < 3);
-            U1Statues = ACKingStatues;               
+            } while (i < 3);
+            U1Statues = ACKingStatues;
         }
     }
-    if(U1Statues == ACKingStatues)
+    if (U1Statues == ACKingStatues)
     {
-        if(UARTTransmissionHasCompleted(UART1))
+        if (UARTTransmissionHasCompleted(UART1))
         {
-            U1Statues = IdelStatues; 
+            U1Statues = IdelStatues;
             U1Busy_OUT = 1;
         }
     }
 }
 
 #endif
-void SendOut(const char *Cache,unsigned int lenth)
+void SendOut(const char *Cache, unsigned int lenth)
 {
     unsigned int i;
-    for(i = 0;i < lenth;i++)
+    for (i = 0; i < lenth; i++)
         PutCharacter(*(Cache + i));
 }
 void WriteString(const char *string)
 {
     while (*string != '\0')
     {
-        while (!UARTTransmitterIsReady(UART1));
+        while (!UARTTransmitterIsReady(UART1))
+            ;
         UARTSendDataByte(UART1, *string);
         string++;
     }
-    while (!UARTTransmissionHasCompleted(UART1));
+    while (!UARTTransmissionHasCompleted(UART1))
+        ;
 }
 void PutCharacter(const char character)
 {
-    while (!UARTTransmitterIsReady(UART1));
+    while (!UARTTransmitterIsReady(UART1))
+        ;
     UARTSendDataByte(UART1, character);
-    while (!UARTTransmissionHasCompleted(UART1));
-} 
+    while (!UARTTransmissionHasCompleted(UART1))
+        ;
+}
 
 #if defined(__Product_PIC32MX2_WIFI__)
 
@@ -1130,7 +1171,7 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart[HA_uart_Length] = 101;
             HA_uart_Length++;
         }
-        #if defined(__32MX230F064D__) else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87) || (EMIAL_id_HA[j] == 0x84) || (EMIAL_id_HA[j] == 0x88))
+#if defined(__32MX230F064D__) else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87) || (EMIAL_id_HA[j] == 0x84) || (EMIAL_id_HA[j] == 0x88))
         {
             HA_uart[HA_uart_Length] = 101; //error
             HA_uart_Length++;
@@ -1143,9 +1184,9 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart[HA_uart_Length] = 114;
             HA_uart_Length++;
         }
-        #endif
+#endif
 #if defined(__32MX250F128D__)
-            else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87))
+        else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87))
         {
             HA_uart[HA_uart_Length] = 101; //error1
             HA_uart_Length++;
@@ -1269,7 +1310,7 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart[HA_uart_Length] = 101;
             HA_uart_Length++;
         }
-        #if defined(__32MX230F064D__) else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87) || (EMIAL_id_HA[j] == 0x84) || (EMIAL_id_HA[j] == 0x88))
+#if defined(__32MX230F064D__) else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87) || (EMIAL_id_HA[j] == 0x84) || (EMIAL_id_HA[j] == 0x88))
         {
             HA_uart[HA_uart_Length] = 101; //error
             HA_uart_Length++;
@@ -1282,9 +1323,9 @@ void HA_uart_email(UINT8 EMIAL_id_PCS_x)
             HA_uart[HA_uart_Length] = 114;
             HA_uart_Length++;
         }
-        #endif
+#endif
 #if defined(__32MX250F128D__)
-            else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87))
+        else if ((EMIAL_id_HA[j] == 0x83) || (EMIAL_id_HA[j] == 0x87))
         {
             HA_uart[HA_uart_Length] = 101; //error1
             HA_uart_Length++;

@@ -55,7 +55,7 @@ Note: make sure the boot loader and your application, both use the same fuse set
 
 #include <stdlib.h>
 #include <plib.h>
-#include "initial.h"		// 初始化
+#include "initial.h" // 初始化
 #include "adf7021.h"
 #include "ID_Decode.h"
 #include "Timers.h"
@@ -63,14 +63,13 @@ Note: make sure the boot loader and your application, both use the same fuse set
 #include "EEPROM.h"
 #include "pcf8563.h"
 
-#if   (((__PIC32_FEATURE_SET__ >= 100) && (__PIC32_FEATURE_SET__ <= 299)))
+#if (((__PIC32_FEATURE_SET__ >= 100) && (__PIC32_FEATURE_SET__ <= 299)))
 #define __PIC32MX1XX_2XX__
 #elif (((__PIC32_FEATURE_SET__ >= 300) && (__PIC32_FEATURE_SET__ <= 799)))
 #define __PIC32MX3XX_7XX__
 #else
 #error("Controller not supported")
 #endif
-
 
 // *****************************************************************************
 // *****************************************************************************
@@ -79,68 +78,68 @@ Note: make sure the boot loader and your application, both use the same fuse set
 // *****************************************************************************
 // Configuring the Device Configuration Registers
 // 80Mhz Core/Periph, Pri Osc w/PLL, Write protect Boot Flash
-#pragma config UPLLEN   = ON        // USB PLL Enabled
-#pragma config UPLLIDIV = DIV_2         // USB PLL Input Divider
+#pragma config UPLLEN = ON      // USB PLL Enabled
+#pragma config UPLLIDIV = DIV_2 // USB PLL Input Divider
 #pragma config FPLLMUL = MUL_20, FPLLIDIV = DIV_2, FWDTEN = OFF
 #pragma config POSCMOD = HS, FNOSC = PRIPLL, FPBDIV = DIV_1
 #pragma config BWP = OFF
 
 #pragma config JTAGEN = OFF
-#pragma config FCKSM    = CSDCMD   // Clock Switching & Fail Safe Monitor: Clock Switching Disabled, Clock Monitoring Disabled
-#pragma config OSCIOFNC = OFF      // CLKO Enable: Disabled
-#pragma config IESO     = OFF      // Internal/External Switch-over: Disabled
-#pragma config FSOSCEN  = OFF      // Secondary Oscillator Enable: Disabled
-#pragma config FUSBIDIO = OFF      // USB USID Selection (Controlled by Port Function)
-#pragma config FVBUSONIO = OFF     // USB VBUS ON Selection (Controlled by Port Function)
+#pragma config FCKSM = CSDCMD  // Clock Switching & Fail Safe Monitor: Clock Switching Disabled, Clock Monitoring Disabled
+#pragma config OSCIOFNC = OFF  // CLKO Enable: Disabled
+#pragma config IESO = OFF      // Internal/External Switch-over: Disabled
+#pragma config FSOSCEN = OFF   // Secondary Oscillator Enable: Disabled
+#pragma config FUSBIDIO = OFF  // USB USID Selection (Controlled by Port Function)
+#pragma config FVBUSONIO = OFF // USB VBUS ON Selection (Controlled by Port Function)
 
 #if defined(TRANSPORT_LAYER_ETH)
-#pragma config FMIIEN = OFF, FETHIO = OFF	// external PHY in RMII/alternate configuration
+#pragma config FMIIEN = OFF, FETHIO = OFF // external PHY in RMII/alternate configuration
 #endif
 
 #if defined(__PIC32MX1XX_2XX__)
 // For PIC32MX1xx, PIC32MX2xx devices there are jumpers on PIM to choose from PGx1/PGx2.
-#pragma config ICESEL = ICS_PGx1    // ICE pins configured on PGx1 (PGx2 is multiplexed with USB D+ and D- pins).
+#pragma config ICESEL = ICS_PGx1 // ICE pins configured on PGx1 (PGx2 is multiplexed with USB D+ and D- pins).
 // For PIC32MX1xx, PIC32MX2xx devices the output divisor is set to 2 to produce max 40MHz clock.
 #if defined(__32MX250F128D__)
-#pragma config FPLLODIV = DIV_2         // PLL Output Divider: Divide by 2  SYSCLK=40M
-#pragma config WDTPS = PS4096  //PS128 // WDT timeout period = 1ms
+#pragma config FPLLODIV = DIV_2 // PLL Output Divider: Divide by 2  SYSCLK=40M
+#pragma config WDTPS = PS4096   //PS128 // WDT timeout period = 1ms
 #endif
 
 #if defined(__32MX230F064D__)
-#pragma config FPLLODIV = DIV_2         // PLL Output Divider: Divide by 2  SYSCLK=40M
-#pragma config WDTPS = PS4096  //PS128 // WDT timeout period = 1ms
+#pragma config FPLLODIV = DIV_2 // PLL Output Divider: Divide by 2  SYSCLK=40M
+#pragma config WDTPS = PS4096   //PS128 // WDT timeout period = 1ms
 #endif
 
 #if defined(__32MX210F016D__)
 #pragma config FPLLODIV = DIV_4 //DIV_4         // PLL Output Divider: Divide by 8    SYSCLK=10M
-#pragma config WDTPS = PS128 // WDT timeout period = 1ms
+#pragma config WDTPS = PS128    // WDT timeout period = 1ms
 #endif
 
 #if defined(__32MX220F032D__)
 #pragma config FPLLODIV = DIV_4 //DIV_4         // PLL Output Divider: Divide by 8    SYSCLK=10M
-#pragma config WDTPS = PS128 // WDT timeout period = 1ms
+#pragma config WDTPS = PS128    // WDT timeout period = 1ms
 #endif
 #elif defined(__PIC32MX3XX_7XX__)
 // For PIC32MX3xx, PIC32MX4xx, PIC32MX5xx, PIC32MX6xx and PIC32MX7xx
 // devices the ICE connection is on PGx2. .
-#pragma config ICESEL = ICS_PGx2    // ICE pins configured on PGx2, Boot write protect OFF.
+#pragma config ICESEL = ICS_PGx2 // ICE pins configured on PGx2, Boot write protect OFF.
 //For PIC32MX3xx, PIC32MX4xx, PIC32MX5xx, PIC32MX6xx and PIC32MX7xx devices,
 //the output divisor is set to 1 to produce max 80MHz clock.
-#pragma config FPLLODIV = DIV_1         // PLL Output Divider: Divide by 1
+#pragma config FPLLODIV = DIV_1  // PLL Output Divider: Divide by 1
 #endif
-
 
 #if defined(__PIC32MX1XX_2XX__)
-#define SYS_FREQ 				(40000000L)
+#define SYS_FREQ (40000000L)
 #else
-#define SYS_FREQ 				(80000000L)
+#define SYS_FREQ (80000000L)
 #endif
-#define TOGGLES_PER_SEC			18
-#define CORE_TICK_RATE	       (SYS_FREQ/2/TOGGLES_PER_SEC)
+#define TOGGLES_PER_SEC 18
+#define CORE_TICK_RATE (SYS_FREQ / 2 / TOGGLES_PER_SEC)
 
 ////////////////////////////////////////////////////////////
 
-int main(void) {
+int main(void)
+{
 main_start:
     DDPCONbits.JTAGEN = 0; // Disable JTAG
     // WDT timeout period is set in the Device Configuration (WDTPS)
@@ -161,7 +160,8 @@ main_start:
     FLAG_HA_ERR_signal = 1;
     RF_test_mode();
     TIME_EMC = 10;
-    while (1) {
+    while (1)
+    {
         all_Erase_EEPROM_next();
         if (FLAG_all_Erase_OK == 0) //EEPROM所有数据擦出时，以下CODE不执行
         {
@@ -169,7 +169,9 @@ main_start:
             ID_Decode_IDCheck();
             ID_Decode_OUT();
             Freq_Scanning();
-        } else if (TIMER1s == 0)goto main_start;
+        }
+        else if (TIMER1s == 0)
+            goto main_start;
         ID_learn();
         TranmissionACK();
     }
@@ -180,7 +182,8 @@ main_start:
 // Core Timer Interrupts
 //
 
-void __ISR(_CORE_TIMER_VECTOR, ipl2) CoreTimerHandler(void) {
+void __ISR(_CORE_TIMER_VECTOR, ipl2) CoreTimerHandler(void)
+{
     // clear the interrupt flag
     mCTClearIntFlag();
     // update the period

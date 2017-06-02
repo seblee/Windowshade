@@ -7,7 +7,7 @@
 /*  Mark        :ver 1.0                                                   */
 /***********************************************************************/
 #include <stdlib.h>
-#include <plib.h>				// 常用C定义
+#include <plib.h> // 常用C定义
 
 extern void ID_learn(void);
 extern void ID_EEPROM_Initial(void);
@@ -30,5 +30,5 @@ extern UINT8 Email_check_TO_APP(void);
 extern void eeprom_IDcheck_CMD0101_01_UART(void);
 extern void eeprom_IDcheck_CMD0111_UART(void);
 extern void IDcheck_CMD0102_HA_Cache(void);
-extern void EEPROM_write_To_or_Tc(UINT8 vlue_x,UINT8 vlue_y,UINT8 vlue_z);
+extern void EEPROM_write_To_or_Tc(UINT8 vlue_x, UINT8 vlue_y, UINT8 vlue_z);
 #endif
